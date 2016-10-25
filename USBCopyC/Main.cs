@@ -133,13 +133,13 @@ namespace WindowsFormsApplication1
         private void populateDriveList(CheckedListBox clb, List<string> list)
         {
             // Clear list collection.
-            list.Clear();            
-            
+            list.Clear();
+
             // Iterate through KeyValuePairs in CheckedListBox and add each Key to list collection                        
             foreach (KeyValuePair<string, string> pair in clb.CheckedItems)
             {
                 list.Add(pair.Key);
-            }           
+            }
         }
 
         private void btnSelectAll_Click(object sender, EventArgs e)

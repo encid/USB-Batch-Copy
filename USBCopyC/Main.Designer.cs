@@ -71,7 +71,7 @@
             this.btnSelectAll.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
             this.btnSelectAll.Name = "btnSelectAll";
             this.btnSelectAll.Size = new System.Drawing.Size(96, 25);
-            this.btnSelectAll.TabIndex = 1;
+            this.btnSelectAll.TabIndex = 2;
             this.btnSelectAll.Text = "Select All";
             this.btnSelectAll.UseVisualStyleBackColor = true;
             this.btnSelectAll.Click += new System.EventHandler(this.btnSelectAll_Click);
@@ -83,7 +83,7 @@
             this.btnSelectNone.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
             this.btnSelectNone.Name = "btnSelectNone";
             this.btnSelectNone.Size = new System.Drawing.Size(96, 25);
-            this.btnSelectNone.TabIndex = 2;
+            this.btnSelectNone.TabIndex = 3;
             this.btnSelectNone.Text = "Select None";
             this.btnSelectNone.UseVisualStyleBackColor = true;
             this.btnSelectNone.Click += new System.EventHandler(this.btnSelectNone_Click);
@@ -95,7 +95,7 @@
             this.btnRefreshDrives.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
             this.btnRefreshDrives.Name = "btnRefreshDrives";
             this.btnRefreshDrives.Size = new System.Drawing.Size(96, 25);
-            this.btnRefreshDrives.TabIndex = 3;
+            this.btnRefreshDrives.TabIndex = 4;
             this.btnRefreshDrives.Text = "Refresh Drives";
             this.btnRefreshDrives.UseVisualStyleBackColor = true;
             this.btnRefreshDrives.Click += new System.EventHandler(this.btnRefreshDrives_Click);
@@ -108,7 +108,7 @@
             this.txtSourceDir.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
             this.txtSourceDir.Name = "txtSourceDir";
             this.txtSourceDir.Size = new System.Drawing.Size(381, 20);
-            this.txtSourceDir.TabIndex = 4;
+            this.txtSourceDir.TabIndex = 5;
             this.txtSourceDir.Text = " <Please select a folder>";
             this.txtSourceDir.Enter += new System.EventHandler(this.txtSourceDir_Enter);
             // 
@@ -119,7 +119,7 @@
             this.btnBrowse.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
             this.btnBrowse.Name = "btnBrowse";
             this.btnBrowse.Size = new System.Drawing.Size(96, 25);
-            this.btnBrowse.TabIndex = 5;
+            this.btnBrowse.TabIndex = 6;
             this.btnBrowse.Text = "Browse";
             this.btnBrowse.UseVisualStyleBackColor = true;
             this.btnBrowse.Click += new System.EventHandler(this.btnBrowse_Click);
@@ -131,7 +131,7 @@
             this.btnStartCopy.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
             this.btnStartCopy.Name = "btnStartCopy";
             this.btnStartCopy.Size = new System.Drawing.Size(96, 26);
-            this.btnStartCopy.TabIndex = 6;
+            this.btnStartCopy.TabIndex = 7;
             this.btnStartCopy.Text = "Start Copy";
             this.btnStartCopy.UseVisualStyleBackColor = true;
             this.btnStartCopy.Click += new System.EventHandler(this.btnStartCopy_Click);
@@ -155,7 +155,7 @@
             this.lstDrives.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
             this.lstDrives.Name = "lstDrives";
             this.lstDrives.Size = new System.Drawing.Size(493, 148);
-            this.lstDrives.TabIndex = 7;
+            this.lstDrives.TabIndex = 1;
             this.lstDrives.SelectedIndexChanged += new System.EventHandler(this.updateDriveCount);
             this.lstDrives.SelectedValueChanged += new System.EventHandler(this.updateDriveCount);
             this.lstDrives.KeyPress += new System.Windows.Forms.KeyPressEventHandler(this.updateDriveCount);
