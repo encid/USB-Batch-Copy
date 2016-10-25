@@ -176,7 +176,7 @@ namespace WindowsFormsApplication1
                 return;
             }
 
-            // If no drives are checked in CheckedListBox, exit method
+            // If no drives are checked in CheckedListBox, exit method 
             if (lstDrives.CheckedItems.Count == 0)
             {
                 MessageBox.Show("Please select at least one destination drive.", "USB Batch Copy", MessageBoxButtons.OK);
