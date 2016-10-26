@@ -15,7 +15,7 @@ namespace WindowsFormsApplication1
 {
     public partial class Main : Form
     {
-        bool cancelled                          = false;
+        bool cancelled;
         Dictionary<string, string> dictRemovableDrives = new Dictionary<string, string>();
         List<string> listDrivesToCopy                  = new List<string>();
         string sourceDir;
