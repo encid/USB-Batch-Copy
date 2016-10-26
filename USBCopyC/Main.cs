@@ -15,10 +15,10 @@ namespace WindowsFormsApplication1
 {
     public partial class Main : Form
     {
-        public bool cancelled                          = false;
+        bool cancelled                          = false;
         Dictionary<string, string> dictRemovableDrives = new Dictionary<string, string>();
         List<string> listDrivesToCopy                  = new List<string>();
-        public string sourceDir;
+        string sourceDir;
         
         public Main()
         {
@@ -43,7 +43,7 @@ namespace WindowsFormsApplication1
         /// </summary>
         /// <param name="bytes">Number of bytes.</param>
         /// <returns></returns>
-        private string formatBytes(long bytes)
+        private string FormatBytes(long bytes)
         // Format a long number into a readable string; 15520 -> "15.52 KB"
         {
             const int scale = 1024;
@@ -65,7 +65,7 @@ namespace WindowsFormsApplication1
         /// </summary>
         /// <param name="list">CheckedListBox to set CheckState on.</param>
         /// <param name="choice">Set CheckState; Checked = True and Unchecked = False.</param>
-        private void setCheckState(CheckedListBox list, bool choice)
+        private void SetCheckState(CheckedListBox list, bool choice)
         // Check or uncheck all items in CheckedListBox, choice = false for uncheck, choice = true for check
         {
             for (int i = 0; i < list.Items.Count; i++)
@@ -77,7 +77,7 @@ namespace WindowsFormsApplication1
         private void Form1_Load(object sender, EventArgs e)
         {
             // Populate listbox with removable drives
-            refreshDrives(lstDrives, dictRemovableDrives);
+            RefreshDrives(lstDrives, dictRemovableDrives);
         }
 
         /// <summary>
@@ -85,13 +85,9 @@ namespace WindowsFormsApplication1
         /// </summary>
         /// <param name="clb">CheckedListBox object to display removable drives.</param>
         /// <param name="dict">Dictionary to bind to CheckedListBox.</param>
-        private void refreshDrives(CheckedListBox clb, Dictionary<string, string> dict)
+        private void RefreshDrives(CheckedListBox clb, Dictionary<string, string> dict)
         // Detects removable drives, adds them to dictionary, binds dictionary to listbox
         {
-            string freeSpace;
-            string totalSpace;
-            string drvInfo;
-
             dict.Clear();
             clb.DataSource = null;            
 
@@ -102,27 +98,26 @@ namespace WindowsFormsApplication1
                       d.IsReady   == true                      
                 select d;
 
-            // If at least one removable drive exists, continue
-            if (drives.Count() >= 1)
+            // If no removable drives detected, exit method
+            if (!drives.Any()) return;
+
+            // Iterate through collection, add drive name and drive information to dictionary
+            foreach (var drive in drives)
             {
-                // Iterate through collection, add drive name and drive information to dictionary
-                foreach (var drive in drives)
-                {
-                    freeSpace = formatBytes(drive.TotalFreeSpace);
-                    totalSpace = formatBytes(drive.TotalSize);
-                    drvInfo = String.Format("{0} - ( Label: {1}, FileSystem: {2}, Size: {3}, Free: {4} )",
-                                                            drive.Name, drive.VolumeLabel, drive.DriveFormat,
-                                                            totalSpace, freeSpace);
-                    dict.Add(drive.Name, drvInfo);
-                }
-
-                // Bind dictionary as CheckedListBox DataSource
-                clb.DataSource = new BindingSource(dictRemovableDrives, null);
-
-                // Set CheckedListBox properties
-                clb.DisplayMember = "Value";
-                clb.ValueMember = "Key";
+                var freeSpace = FormatBytes(drive.TotalFreeSpace);
+                var totalSpace = FormatBytes(drive.TotalSize);
+                var drvInfo = String.Format("{0} - ( Label: {1}, FileSystem: {2}, Size: {3}, Free: {4} )",
+                    drive.Name, drive.VolumeLabel, drive.DriveFormat,
+                    totalSpace, freeSpace);
+                dict.Add(drive.Name, drvInfo);
             }
+
+            // Bind dictionary as CheckedListBox DataSource
+            clb.DataSource = new BindingSource(dictRemovableDrives, null);
+
+            // Set CheckedListBox properties
+            clb.DisplayMember = "Value";
+            clb.ValueMember = "Key";
         }
 
         /// <summary>
@@ -130,7 +125,7 @@ namespace WindowsFormsApplication1
         /// </summary>
         /// <param name="clb">CheckedListBox to parse.</param>
         /// <param name="list">List collection to add items to.</param>
-        private void populateDriveList(CheckedListBox clb, List<string> list)
+        private void PopulateDriveList(CheckedListBox clb, List<string> list)
         {
             // Clear list collection.
             list.Clear();
@@ -145,21 +140,21 @@ namespace WindowsFormsApplication1
         private void btnSelectAll_Click(object sender, EventArgs e)
          // Sets check state for all listed drives to true.
         {
-            setCheckState(lstDrives, true);
+            SetCheckState(lstDrives, true);
             updateDriveCount(sender, e);
         }
 
         private void btnSelectNone_Click(object sender, EventArgs e)
         // Sets check state for all listed drives to false.
         {
-            setCheckState(lstDrives, false);
+            SetCheckState(lstDrives, false);
             updateDriveCount(sender, e);
         }
 
          private void btnRefreshDrives_Click(object sender, EventArgs e)
         // Detects removable drives and displays in CheckedListBox
         {
-            refreshDrives(lstDrives, dictRemovableDrives);
+            RefreshDrives(lstDrives, dictRemovableDrives);
         }
 
         private void btnStartCopy_Click(object sender, EventArgs e)
@@ -184,7 +179,10 @@ namespace WindowsFormsApplication1
             }
 
             // Add checked items in CheckedListBox to list object
-            populateDriveList(lstDrives, listDrivesToCopy);
+            PopulateDriveList(lstDrives, listDrivesToCopy);
+
+            // Set some properties and variables
+            sourceDir = txtSourceDir.Text;
             btnStartCopy.Enabled = false;
             lblStatus.Text       = "Copying...";
             lblStatus.ForeColor  = Color.Black;
@@ -222,7 +220,7 @@ namespace WindowsFormsApplication1
 
         private void btnBrowse_Click(object sender, EventArgs e)
         {
-            FolderBrowserDialog fbd = new FolderBrowserDialog();
+            var fbd = new FolderBrowserDialog();
 
             if (fbd.ShowDialog() == DialogResult.OK)
             {
@@ -241,9 +239,9 @@ namespace WindowsFormsApplication1
             // Start copy execution
             try
             {
-                for (int i = 0; i < listDrivesToCopy.Count; i++)
+                foreach (string t in listDrivesToCopy)
                 {
-                    FileSystem.CopyDirectory(txtSourceDir.Text, listDrivesToCopy[i], UIOption.AllDialogs, UICancelOption.ThrowException);
+                    FileSystem.CopyDirectory(sourceDir, t, UIOption.AllDialogs, UICancelOption.ThrowException);
                 }
             }
             catch (OperationCanceledException)
@@ -285,7 +283,7 @@ namespace WindowsFormsApplication1
                 lblStatus.Text = "Success! Copied to " + lstDrives.CheckedItems.Count + " drives.";
 
             lblStatus.ForeColor = Color.Green;
-            setCheckState(lstDrives, false);
+            SetCheckState(lstDrives, false);
         }
 
         private void txtSourceDir_Enter(object sender, EventArgs e)
