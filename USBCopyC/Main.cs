@@ -14,12 +14,12 @@ using System.Drawing;
 namespace WindowsFormsApplication1
 {
     public partial class Main : Form
-    {
-        bool cancelled;
+    {        
         Dictionary<string, string> dictRemovableDrives = new Dictionary<string, string>();
         List<string> listDrivesToCopy                  = new List<string>();
         string sourceDir;
-        
+        bool cancelled;
+
         public Main()
         {
             InitializeComponent();
@@ -104,20 +104,18 @@ namespace WindowsFormsApplication1
             // Iterate through collection, add drive name and drive information to dictionary
             foreach (var drive in drives)
             {
-                var freeSpace = FormatBytes(drive.TotalFreeSpace);
+                var freeSpace  = FormatBytes(drive.TotalFreeSpace);
                 var totalSpace = FormatBytes(drive.TotalSize);
-                var drvInfo = String.Format("{0} - ( Label: {1}, FileSystem: {2}, Size: {3}, Free: {4} )",
+                var drvInfo    = String.Format("{0} - ( Label: {1}, FileSystem: {2}, Size: {3}, Free: {4} )",
                     drive.Name, drive.VolumeLabel, drive.DriveFormat,
                     totalSpace, freeSpace);
                 dict.Add(drive.Name, drvInfo);
             }
 
-            // Bind dictionary as CheckedListBox DataSource
-            clb.DataSource = new BindingSource(dictRemovableDrives, null);
-
-            // Set CheckedListBox properties
+            // Bind dictionary as CheckedListBox DataSource and set other properties
+            clb.DataSource    = new BindingSource(dictRemovableDrives, null);            
             clb.DisplayMember = "Value";
-            clb.ValueMember = "Key";
+            clb.ValueMember   = "Key";
         }
 
         /// <summary>
@@ -163,9 +161,10 @@ namespace WindowsFormsApplication1
             // Set UI properties and other vars
             PictureBox1.Visible = false;
             cancelled = false;
-                        
+            sourceDir = txtSourceDir.Text;
+
             // If source directory is not a valid directory, exit method
-            if (Directory.Exists(txtSourceDir.Text) == false)
+            if (!Directory.Exists(txtSourceDir.Text))
             {
                 MessageBox.Show("Please select a valid source directory.", "USB Batch Copy", MessageBoxButtons.OK);
                 return;
@@ -181,8 +180,7 @@ namespace WindowsFormsApplication1
             // Add checked items in CheckedListBox to list object
             PopulateDriveList(lstDrives, listDrivesToCopy);
 
-            // Set some properties and variables
-            sourceDir = txtSourceDir.Text;
+            // Set some properties and variables            
             btnStartCopy.Enabled = false;
             lblStatus.Text       = "Copying...";
             lblStatus.ForeColor  = Color.Black;
@@ -231,7 +229,7 @@ namespace WindowsFormsApplication1
         private void tmrRefresh_Tick(object sender, EventArgs e)
         {
             lblSelectedDrives.Text = "Drives Selected: " + lstDrives.CheckedItems.Count;
-            //GC.Collect();
+            GC.Collect();
         }
 
         private void backgroundWorker1_DoWork(object sender, System.ComponentModel.DoWorkEventArgs e)
@@ -245,12 +243,7 @@ namespace WindowsFormsApplication1
                 }
             }
             catch (OperationCanceledException)
-            {
-                // Updates object properties using safe method to access UI thread
-                //ExecuteSecure(() => btnStartCopy.Enabled = true);
-                //ExecuteSecure(() => lblStatus.ForeColor  = Color.Black);
-                //ExecuteSecure(() => lblStatus.Text       = "Cancelled copy.");
-                
+            {                
                 // Update UI object properties using safe method 
                 BeginInvoke((Action)delegate
                 {
