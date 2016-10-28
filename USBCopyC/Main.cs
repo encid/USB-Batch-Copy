@@ -3,13 +3,13 @@
  Written by R. Cavallaro
 */
 
+using Microsoft.VisualBasic.FileIO;
 using System;
 using System.Collections.Generic;
-using System.Windows.Forms;
-using System.IO;
-using Microsoft.VisualBasic.FileIO;
-using System.Linq;
 using System.Drawing;
+using System.IO;
+using System.Linq;
+using System.Windows.Forms;
 
 namespace WindowsFormsApplication1
 {
@@ -73,7 +73,7 @@ namespace WindowsFormsApplication1
                 list.SetItemChecked(i, choice);
             }
         }
-                
+                        
         private void Form1_Load(object sender, EventArgs e)
         {
             // Populate listbox with removable drives
@@ -89,13 +89,13 @@ namespace WindowsFormsApplication1
         // Detects removable drives, adds them to dictionary, binds dictionary to listbox
         {
             dict.Clear();
-            clb.DataSource = null;            
+            clb.DataSource = null;
 
             // Get collection of connected drives and query for removable and ready drives
-            IEnumerable<DriveInfo> drives = 
+            IEnumerable<DriveInfo> drives =
                 from d in DriveInfo.GetDrives()
                 where d.DriveType == DriveType.Removable &&
-                      d.IsReady   == true                      
+                      d.IsReady   == true
                 select d;
 
             // If no removable drives detected, exit method
@@ -107,8 +107,8 @@ namespace WindowsFormsApplication1
                 var freeSpace  = FormatBytes(drive.TotalFreeSpace);
                 var totalSpace = FormatBytes(drive.TotalSize);
                 var drvInfo    = String.Format("{0} - ( Label: {1}, FileSystem: {2}, Size: {3}, Free: {4} )",
-                    drive.Name, drive.VolumeLabel, drive.DriveFormat,
-                    totalSpace, freeSpace);
+                                 drive.Name, drive.VolumeLabel, drive.DriveFormat,
+                                 totalSpace, freeSpace);
                 dict.Add(drive.Name, drvInfo);
             }
 
@@ -123,7 +123,7 @@ namespace WindowsFormsApplication1
         /// </summary>
         /// <param name="clb">CheckedListBox to parse.</param>
         /// <param name="list">List collection to add items to.</param>
-        private void PopulateDriveList(CheckedListBox clb, List<string> list)
+        private void PopulateListOfDrives(CheckedListBox clb, List<string> list)
         {
             // Clear list collection.
             list.Clear();
@@ -178,7 +178,7 @@ namespace WindowsFormsApplication1
             }
 
             // Add checked items in CheckedListBox to list object
-            PopulateDriveList(lstDrives, listDrivesToCopy);
+            PopulateListOfDrives(lstDrives, listDrivesToCopy);
 
             // Set some properties and variables            
             btnStartCopy.Enabled = false;
@@ -253,8 +253,7 @@ namespace WindowsFormsApplication1
                 });
                 
                 cancelled = true;
-            }
-            
+            }            
         }
 
         private void backgroundWorker1_RunWorkerCompleted(object sender, System.ComponentModel.RunWorkerCompletedEventArgs e)

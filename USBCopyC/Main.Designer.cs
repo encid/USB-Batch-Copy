@@ -210,7 +210,7 @@
             this.groupBox3.Size = new System.Drawing.Size(516, 64);
             this.groupBox3.TabIndex = 28;
             this.groupBox3.TabStop = false;
-            this.groupBox3.Text = "Step 3: Click the \'Start Copy\' button to begin..";
+            this.groupBox3.Text = "Step 3: Click the \'Start Copy\' button to begin";
             // 
             // lblStatus
             // 
@@ -262,7 +262,7 @@
             this.MaximizeBox = false;
             this.Name = "Main";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
-            this.Text = "USB Batch Copy 1.03";
+            this.Text = "USB Batch Copy 1.03c";
             this.Load += new System.EventHandler(this.Form1_Load);
             this.groupBox1.ResumeLayout(false);
             this.groupBox1.PerformLayout();
