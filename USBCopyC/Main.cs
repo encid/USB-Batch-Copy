@@ -116,6 +116,7 @@ namespace WindowsFormsApplication1
             clb.DataSource    = new BindingSource(dictRemovableDrives, null);            
             clb.DisplayMember = "Value";
             clb.ValueMember   = "Key";
+            ExecuteSecure(() => lblSelectedDrives.Text = "Drives Selected: " + lstDrives.CheckedItems.Count);  // Update drive checked count label securely
         }
 
         /// <summary>
@@ -242,12 +243,12 @@ namespace WindowsFormsApplication1
                 {
                     FileSystem.CopyDirectory(sourceDir, t, UIOption.AllDialogs, UICancelOption.ThrowException);
                 }
-            }
-            catch (ArgumentException)
-            {
+            }            
+            catch (ArgumentException)  // Catch user removal of drive during copy and set bool flag for RunWorkerCompleted to process
+            {                
                 destNotExist = true;
             }
-            catch (OperationCanceledException)
+            catch (OperationCanceledException)  // Catch user cancelling copy and set bool flag for RunWorkerCompleted to process
             {
                 cancelled = true;
             }            
@@ -257,7 +258,7 @@ namespace WindowsFormsApplication1
         {
             btnStartCopy.Enabled = true;
 
-            // Check for caught exceptions from BackgroundWorker
+            // Checks for cancelled flag from BackgroundWorker1_DoWork and raises events / sets UI control properties appropriately
             if (cancelled)
             {
                 MessageBox.Show("Copying operation has been cancelled.");
@@ -266,18 +267,21 @@ namespace WindowsFormsApplication1
                 return;
             }
 
+            // Checks for destNotExist flag from BackgroundWorker1_DoWork and raises events / sets UI control properties appropriately
             if (destNotExist)
             {
                 MessageBox.Show("Target destination does not exist.  Please try again.");
                 lblStatus.ForeColor = Color.Black;
                 lblStatus.Text      = "Ready";
-                RefreshDrives(lstDrives, dictRemovableDrives);      
+                RefreshDrives(lstDrives, dictRemovableDrives);
+                ExecuteSecure(() => lblSelectedDrives.Text = "Drives Selected: " + lstDrives.CheckedItems.Count);  // Update drive checked count label securely
                 return;
             }
             
-            // Copy completed successfully, so continue            
+            // Copy completed successfully with no flagged bools, so continue            
             PictureBox1.Visible = true;
 
+            // Check how many drives were copied and set status accordingly
             if (lstDrives.CheckedItems.Count == 1)
             {
                 lblStatus.Text = "Success! Copied to 1 drive.";
@@ -287,6 +291,7 @@ namespace WindowsFormsApplication1
 
             lblStatus.ForeColor = Color.Green;
             SetCheckState(lstDrives, false);
+            ExecuteSecure(() => lblSelectedDrives.Text = "Drives Selected: " + lstDrives.CheckedItems.Count);  // Update drive checked count label securely
         }
 
         private void txtSourceDir_Enter(object sender, EventArgs e)

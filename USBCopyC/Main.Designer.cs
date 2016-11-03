@@ -149,7 +149,7 @@
             // lstDrives
             // 
             this.lstDrives.CheckOnClick = true;
-            this.lstDrives.Font = new System.Drawing.Font("Arial", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.lstDrives.Font = new System.Drawing.Font("Arial", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.lstDrives.FormattingEnabled = true;
             this.lstDrives.Location = new System.Drawing.Point(12, 21);
             this.lstDrives.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
