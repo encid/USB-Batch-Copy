@@ -19,6 +19,7 @@ namespace WindowsFormsApplication1
         List<string> listDrivesToCopy                  = new List<string>();
         string sourceDir;
         bool cancelled;
+        bool destNotExist;
 
         public Main()
         {
@@ -54,7 +55,6 @@ namespace WindowsFormsApplication1
             {
                 if (bytes > max)
                     return string.Format("{0:##.##} {1}", decimal.Divide(bytes, max), order);
-
                 max /= scale;
             }
             return "0 Bytes";
@@ -139,14 +139,14 @@ namespace WindowsFormsApplication1
          // Sets check state for all listed drives to true.
         {
             SetCheckState(lstDrives, true);
-            updateDriveCount(sender, e);
+            UpdateDriveCount(sender, e);
         }
 
         private void btnSelectNone_Click(object sender, EventArgs e)
         // Sets check state for all listed drives to false.
         {
             SetCheckState(lstDrives, false);
-            updateDriveCount(sender, e);
+            UpdateDriveCount(sender, e);
         }
 
          private void btnRefreshDrives_Click(object sender, EventArgs e)
@@ -160,8 +160,9 @@ namespace WindowsFormsApplication1
         {
             // Set UI properties and other vars
             PictureBox1.Visible = false;
-            cancelled = false;
-            sourceDir = txtSourceDir.Text;
+            cancelled           = false;
+            destNotExist        = false;
+            sourceDir           = txtSourceDir.Text;
 
             // If source directory is not a valid directory, exit method
             if (!Directory.Exists(txtSourceDir.Text))
@@ -242,16 +243,12 @@ namespace WindowsFormsApplication1
                     FileSystem.CopyDirectory(sourceDir, t, UIOption.AllDialogs, UICancelOption.ThrowException);
                 }
             }
+            catch (ArgumentException)
+            {
+                destNotExist = true;
+            }
             catch (OperationCanceledException)
-            {                
-                // Update UI object properties using safe method 
-                BeginInvoke((Action)delegate
-                {
-                    btnStartCopy.Enabled = true;
-                    lblStatus.ForeColor = Color.Black;
-                    lblStatus.Text = "Cancelled copy.";
-                });
-                
+            {
                 cancelled = true;
             }            
         }
@@ -260,11 +257,25 @@ namespace WindowsFormsApplication1
         {
             btnStartCopy.Enabled = true;
 
-            if (cancelled == true)
+            // Check for caught exceptions from BackgroundWorker
+            if (cancelled)
             {
+                MessageBox.Show("Copying operation has been cancelled.");
+                lblStatus.ForeColor = Color.Black;
+                lblStatus.Text      = "Ready";
                 return;
             }
 
+            if (destNotExist)
+            {
+                MessageBox.Show("Target destination does not exist.  Please try again.");
+                lblStatus.ForeColor = Color.Black;
+                lblStatus.Text      = "Ready";
+                RefreshDrives(lstDrives, dictRemovableDrives);      
+                return;
+            }
+            
+            // Copy completed successfully, so continue            
             PictureBox1.Visible = true;
 
             if (lstDrives.CheckedItems.Count == 1)
@@ -287,7 +298,7 @@ namespace WindowsFormsApplication1
             });
         }
 
-        private void updateDriveCount(object sender, EventArgs e)
+        private void UpdateDriveCount(object sender, EventArgs e)
         {
             lblSelectedDrives.Text = "Drives Selected: " + lstDrives.CheckedItems.Count;
         }

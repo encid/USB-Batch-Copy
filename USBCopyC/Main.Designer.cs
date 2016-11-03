@@ -156,9 +156,9 @@
             this.lstDrives.Name = "lstDrives";
             this.lstDrives.Size = new System.Drawing.Size(493, 148);
             this.lstDrives.TabIndex = 1;
-            this.lstDrives.SelectedIndexChanged += new System.EventHandler(this.updateDriveCount);
-            this.lstDrives.SelectedValueChanged += new System.EventHandler(this.updateDriveCount);
-            this.lstDrives.KeyPress += new System.Windows.Forms.KeyPressEventHandler(this.updateDriveCount);
+            this.lstDrives.SelectedIndexChanged += new System.EventHandler(this.UpdateDriveCount);
+            this.lstDrives.SelectedValueChanged += new System.EventHandler(this.UpdateDriveCount);
+            this.lstDrives.KeyPress += new System.Windows.Forms.KeyPressEventHandler(this.UpdateDriveCount);
             // 
             // groupBox1
             // 
