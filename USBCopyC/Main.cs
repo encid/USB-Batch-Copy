@@ -10,6 +10,8 @@ using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Windows.Forms;
+using System.Configuration;
+
 
 namespace WindowsFormsApplication1
 {
@@ -18,8 +20,9 @@ namespace WindowsFormsApplication1
         Dictionary<string, string> dictRemovableDrives = new Dictionary<string, string>();
         List<string> listDrivesToCopy                  = new List<string>();
         string sourceDir;
+        int currDriveCount;
         bool userCancelledCopy = false;
-        bool argExceptionError = false;
+        bool argExceptionError = false;       
 
         public Main()
         {
@@ -243,7 +246,21 @@ namespace WindowsFormsApplication1
         private void tmrRefresh_Tick(object sender, EventArgs e)
         {
             lblSelectedDrives.Text = "Drives Selected: " + lstDrives.CheckedItems.Count;
-            GC.Collect();
+                        
+            // AUTOMATIC REFRESH of drive list -- Edit config file to enable/disable
+            if (ConfigurationManager.AppSettings["autoRefresh"] == "1")
+            {
+                IEnumerable<DriveInfo> drives =
+                from d in DriveInfo.GetDrives()
+                where d.DriveType == DriveType.Removable &&
+                      d.IsReady == true
+                select d;
+
+                if (drives.Count() != currDriveCount) { RefreshDrives(lstDrives, dictRemovableDrives); }
+                currDriveCount = drives.Count();
+
+                GC.Collect();
+            }
         }
 
         private void backgroundWorker1_DoWork(object sender, System.ComponentModel.DoWorkEventArgs e)

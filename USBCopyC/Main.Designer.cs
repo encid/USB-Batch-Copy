@@ -238,6 +238,7 @@
             // 
             // tmrRefresh
             // 
+            this.tmrRefresh.Enabled = true;
             this.tmrRefresh.Tick += new System.EventHandler(this.tmrRefresh_Tick);
             // 
             // backgroundWorker1
