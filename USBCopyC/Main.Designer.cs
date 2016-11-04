@@ -154,7 +154,7 @@
             this.lstDrives.Location = new System.Drawing.Point(12, 21);
             this.lstDrives.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
             this.lstDrives.Name = "lstDrives";
-            this.lstDrives.Size = new System.Drawing.Size(493, 148);
+            this.lstDrives.Size = new System.Drawing.Size(493, 140);
             this.lstDrives.TabIndex = 1;
             this.lstDrives.SelectedIndexChanged += new System.EventHandler(this.UpdateDriveCount);
             this.lstDrives.SelectedValueChanged += new System.EventHandler(this.UpdateDriveCount);
@@ -262,7 +262,7 @@
             this.MaximizeBox = false;
             this.Name = "Main";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
-            this.Text = "USB Batch Copy 1.03c";
+            this.Text = "USB Batch Copy 1.04";
             this.Load += new System.EventHandler(this.Form1_Load);
             this.groupBox1.ResumeLayout(false);
             this.groupBox1.PerformLayout();
