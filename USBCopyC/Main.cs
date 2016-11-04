@@ -18,8 +18,8 @@ namespace WindowsFormsApplication1
         Dictionary<string, string> dictRemovableDrives = new Dictionary<string, string>();
         List<string> listDrivesToCopy                  = new List<string>();
         string sourceDir;
-        bool cancelled;
-        bool destNotExist;
+        bool userCancelledCopy = false;
+        bool argExceptionError = false;
 
         public Main()
         {
@@ -160,27 +160,38 @@ namespace WindowsFormsApplication1
         // Does some error checking on user input, and starts the FileSystem.CopyDirectory method
         {
             // Set UI properties and other vars
-            PictureBox1.Visible = false;
-            cancelled           = false;
-            destNotExist        = false;
-            sourceDir           = txtSourceDir.Text;
+            PictureBox1.Visible         = false;
+            userCancelledCopy           = false;
+            argExceptionError           = false;
+            sourceDir                   = txtSourceDir.Text;
 
             // If source directory is not a valid directory, exit method
             if (!Directory.Exists(txtSourceDir.Text))
             {
                 MessageBox.Show("Please select a valid source directory.", "USB Batch Copy", MessageBoxButtons.OK);
                 return;
-            }
+            }            
 
             // If no drives are checked in CheckedListBox, exit method 
             if (lstDrives.CheckedItems.Count == 0)
             {
                 MessageBox.Show("Please select at least one destination drive.", "USB Batch Copy", MessageBoxButtons.OK);
                 return;
-            }
+            }         
 
             // Add checked items in CheckedListBox to list object
             PopulateListOfDrives(lstDrives, listDrivesToCopy);
+
+            // Check to make sure user did not remove drive after refresh, but before copy
+            foreach (var item in listDrivesToCopy)
+            {
+                if (!Directory.Exists(item))
+                {
+                    MessageBox.Show("Target destination drive does not exist.  Please try again.");
+                    RefreshDrives(lstDrives, dictRemovableDrives);
+                    return;
+                }
+            }
 
             // Set some properties and variables            
             btnStartCopy.Enabled = false;
@@ -215,6 +226,7 @@ namespace WindowsFormsApplication1
             }
             */
 
+            // Begin the copy in BackgroundWorker
             backgroundWorker1.RunWorkerAsync();
         }
 
@@ -246,11 +258,11 @@ namespace WindowsFormsApplication1
             }            
             catch (ArgumentException)  // Catch user removal of drive during copy and set bool flag for RunWorkerCompleted to process
             {                
-                destNotExist = true;
+                argExceptionError = true;
             }
             catch (OperationCanceledException)  // Catch user cancelling copy and set bool flag for RunWorkerCompleted to process
             {
-                cancelled = true;
+                userCancelledCopy = true;
             }            
         }
 
@@ -259,7 +271,7 @@ namespace WindowsFormsApplication1
             btnStartCopy.Enabled = true;
 
             // Checks for cancelled flag from BackgroundWorker1_DoWork and raises events / sets UI control properties appropriately
-            if (cancelled)
+            if (userCancelledCopy)
             {
                 MessageBox.Show("Copying operation has been cancelled.");
                 lblStatus.ForeColor = Color.Black;
@@ -267,16 +279,16 @@ namespace WindowsFormsApplication1
                 return;
             }
 
-            // Checks for destNotExist flag from BackgroundWorker1_DoWork and raises events / sets UI control properties appropriately
-            if (destNotExist)
+            // Checks for argExceptionError flag from BackgroundWorker1_DoWork and raises events / sets UI control properties appropriately
+            if (argExceptionError)
             {
-                MessageBox.Show("Target destination does not exist.  Please try again.");
+                MessageBox.Show("An error has occured.  Please try again.");
                 lblStatus.ForeColor = Color.Black;
                 lblStatus.Text      = "Ready";
                 RefreshDrives(lstDrives, dictRemovableDrives);
                 ExecuteSecure(() => lblSelectedDrives.Text = "Drives Selected: " + lstDrives.CheckedItems.Count);  // Update drive checked count label securely
                 return;
-            }
+            }    
             
             // Copy completed successfully with no flagged bools, so continue            
             PictureBox1.Visible = true;
