@@ -12,7 +12,6 @@ using System.Linq;
 using System.Windows.Forms;
 using System.Configuration;
 
-
 namespace WindowsFormsApplication1
 {
     public partial class Main : Form
@@ -257,10 +256,10 @@ namespace WindowsFormsApplication1
                 select d;
 
                 if (drives.Count() != currDriveCount) { RefreshDrives(lstDrives, dictRemovableDrives); }
-                currDriveCount = drives.Count();
-
-                GC.Collect();
+                currDriveCount = drives.Count();                                
             }
+
+            GC.Collect();
         }
 
         private void backgroundWorker1_DoWork(object sender, System.ComponentModel.DoWorkEventArgs e)
