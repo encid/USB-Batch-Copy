@@ -5,7 +5,6 @@
 
 using Microsoft.VisualBasic.FileIO;
 using System;
-using System.ComponentModel;
 using System.Collections.Generic;
 using System.Drawing;
 using System.IO;
@@ -23,7 +22,6 @@ namespace WindowsFormsApplication1
         string sourceDir;
         int currDriveCount;
 
-
         public Main()
         {
             InitializeComponent();
@@ -36,10 +34,13 @@ namespace WindowsFormsApplication1
         private void ExecuteSecure(Action a)
         // Usage example: ExecuteSecure(() => this.someLabel.Text = "foo");
         {
-            if (InvokeRequired)
-                BeginInvoke(a);
-            else
-                a();
+            //if (InvokeRequired)
+                BeginInvoke((Action)delegate
+                {
+                    a();
+                });
+            //else
+            //    a();
         }
 
         /// <summary>
@@ -240,8 +241,6 @@ namespace WindowsFormsApplication1
 
         private void backgroundWorker1_DoWork(object sender, System.ComponentModel.DoWorkEventArgs e)
         {
-            BackgroundWorker bw = sender as BackgroundWorker;
-
             // Start copy execution
             try
             {
@@ -303,10 +302,7 @@ namespace WindowsFormsApplication1
         private void txtSourceDir_Enter(object sender, EventArgs e)
         {
             // Kick off SelectAll asynchronously so that it occurs after Click
-            BeginInvoke((Action)delegate
-            {
-                txtSourceDir.SelectAll();
-            });
+            ExecuteSecure(() => txtSourceDir.SelectAll());            
         }
 
         private void UpdateDriveCount(object sender, EventArgs e)
