@@ -67,7 +67,7 @@
             // btnSelectAll
             // 
             this.btnSelectAll.Font = new System.Drawing.Font("Arial", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.btnSelectAll.Location = new System.Drawing.Point(12, 175);
+            this.btnSelectAll.Location = new System.Drawing.Point(12, 169);
             this.btnSelectAll.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
             this.btnSelectAll.Name = "btnSelectAll";
             this.btnSelectAll.Size = new System.Drawing.Size(96, 25);
@@ -79,7 +79,7 @@
             // btnSelectNone
             // 
             this.btnSelectNone.Font = new System.Drawing.Font("Arial", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.btnSelectNone.Location = new System.Drawing.Point(111, 175);
+            this.btnSelectNone.Location = new System.Drawing.Point(114, 169);
             this.btnSelectNone.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
             this.btnSelectNone.Name = "btnSelectNone";
             this.btnSelectNone.Size = new System.Drawing.Size(96, 25);
@@ -91,7 +91,7 @@
             // btnRefreshDrives
             // 
             this.btnRefreshDrives.Font = new System.Drawing.Font("Arial", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.btnRefreshDrives.Location = new System.Drawing.Point(409, 175);
+            this.btnRefreshDrives.Location = new System.Drawing.Point(410, 169);
             this.btnRefreshDrives.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
             this.btnRefreshDrives.Name = "btnRefreshDrives";
             this.btnRefreshDrives.Size = new System.Drawing.Size(96, 25);
@@ -140,7 +140,7 @@
             // 
             this.lblSelectedDrives.AutoSize = true;
             this.lblSelectedDrives.Font = new System.Drawing.Font("Arial", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.lblSelectedDrives.Location = new System.Drawing.Point(227, 179);
+            this.lblSelectedDrives.Location = new System.Drawing.Point(226, 173);
             this.lblSelectedDrives.Name = "lblSelectedDrives";
             this.lblSelectedDrives.Size = new System.Drawing.Size(106, 15);
             this.lblSelectedDrives.TabIndex = 7;
@@ -171,7 +171,7 @@
             this.groupBox1.Font = new System.Drawing.Font("Arial", 9.75F, ((System.Drawing.FontStyle)((System.Drawing.FontStyle.Bold | System.Drawing.FontStyle.Italic))), System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.groupBox1.Location = new System.Drawing.Point(12, 55);
             this.groupBox1.Name = "groupBox1";
-            this.groupBox1.Size = new System.Drawing.Size(516, 208);
+            this.groupBox1.Size = new System.Drawing.Size(516, 206);
             this.groupBox1.TabIndex = 10;
             this.groupBox1.TabStop = false;
             this.groupBox1.Text = "Step 1: Select the USB drive(s) to be processed";
@@ -243,6 +243,7 @@
             // 
             // backgroundWorker1
             // 
+            this.backgroundWorker1.WorkerSupportsCancellation = true;
             this.backgroundWorker1.DoWork += new System.ComponentModel.DoWorkEventHandler(this.backgroundWorker1_DoWork);
             this.backgroundWorker1.RunWorkerCompleted += new System.ComponentModel.RunWorkerCompletedEventHandler(this.backgroundWorker1_RunWorkerCompleted);
             // 

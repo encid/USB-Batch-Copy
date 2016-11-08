@@ -5,6 +5,7 @@
 
 using Microsoft.VisualBasic.FileIO;
 using System;
+using System.ComponentModel;
 using System.Collections.Generic;
 using System.Drawing;
 using System.IO;
@@ -18,10 +19,10 @@ namespace WindowsFormsApplication1
     {        
         Dictionary<string, string> dictRemovableDrives = new Dictionary<string, string>();
         List<string> listDrivesToCopy                  = new List<string>();
+        bool argExceptionError                         = false;
         string sourceDir;
         int currDriveCount;
-        bool userCancelledCopy = false;
-        bool argExceptionError = false;       
+              
 
         public Main()
         {
@@ -159,11 +160,10 @@ namespace WindowsFormsApplication1
         }
 
         private void btnStartCopy_Click(object sender, EventArgs e)
-        // Does some error checking on user input, and starts the FileSystem.CopyDirectory method
+        // Does some error checking on user input, and kicks off the BackgroundWorker
         {
             // Set UI properties and other vars
             PictureBox1.Visible         = false;
-            userCancelledCopy           = false;
             argExceptionError           = false;
             sourceDir                   = txtSourceDir.Text;
 
@@ -198,35 +198,7 @@ namespace WindowsFormsApplication1
             // Set some properties and variables            
             btnStartCopy.Enabled = false;
             lblStatus.Text       = "Copying...";
-            lblStatus.ForeColor  = Color.Black;
-
-            /*
-            try
-            {
-                // Check if drives are ready, exit method if any drives are not ready
-                for (int i = 0; i < listDrivesToCopy.Count; i++)
-                {
-                    string drive = listDrivesToCopy[i];
-                    IEnumerable<DriveInfo> drives =
-                        from d in DriveInfo.GetDrives()
-                        where d.Name == drive
-                        select d;
-                    
-                    foreach (var drv in drives)
-                    {
-                        if (drv.IsReady == false)
-                        {
-                            MessageBox.Show("Drive " + drv + " is not ready, please check and try again.");
-                            return;
-                        }
-                    }
-                }                                           
-            }
-            catch (Exception)
-            {
-                return;
-            }
-            */
+            lblStatus.ForeColor  = Color.Black;                                  
 
             // Begin the copy in BackgroundWorker
             backgroundWorker1.RunWorkerAsync();
@@ -252,34 +224,31 @@ namespace WindowsFormsApplication1
                 IEnumerable<DriveInfo> drives =
                 from d in DriveInfo.GetDrives()
                 where d.DriveType == DriveType.Removable &&
-                      d.IsReady == true
+                        d.IsReady == true
                 select d;
 
-                if (drives.Count() != currDriveCount) { RefreshDrives(lstDrives, dictRemovableDrives); }
+                if (drives.Count() != currDriveCount)
+                {
+                    RefreshDrives(lstDrives, dictRemovableDrives);
+                }
+
                 currDriveCount = drives.Count();                                
             }
 
-            GC.Collect();
+            //GC.Collect();
         }
 
         private void backgroundWorker1_DoWork(object sender, System.ComponentModel.DoWorkEventArgs e)
         {
-            // Start copy execution
-            try
+            BackgroundWorker bw = sender as BackgroundWorker;
+
+            e.Result = ExecuteCopy(bw);
+
+            if (bw.CancellationPending)
             {
-                foreach (string t in listDrivesToCopy)
-                {
-                    FileSystem.CopyDirectory(sourceDir, t, UIOption.AllDialogs, UICancelOption.ThrowException);
-                }
-            }            
-            catch (ArgumentException)  // Catch user removal of drive during copy and set bool flag for RunWorkerCompleted to process
-            {                
-                argExceptionError = true;
+                e.Cancel = true;
             }
-            catch (OperationCanceledException)  // Catch user cancelling copy and set bool flag for RunWorkerCompleted to process
-            {
-                userCancelledCopy = true;
-            }            
+            
         }
 
         private void backgroundWorker1_RunWorkerCompleted(object sender, System.ComponentModel.RunWorkerCompletedEventArgs e)
@@ -287,11 +256,11 @@ namespace WindowsFormsApplication1
             btnStartCopy.Enabled = true;
 
             // Checks for cancelled flag from BackgroundWorker1_DoWork and raises events / sets UI control properties appropriately
-            if (userCancelledCopy)
+            if (e.Cancelled)
             {
-                MessageBox.Show("Copying operation has been cancelled.");
+                MessageBox.Show(this, "Copying operation has been cancelled.", "USB Batch Copy");
                 lblStatus.ForeColor = Color.Black;
-                lblStatus.Text      = "Ready";
+                lblStatus.Text = "Ready";
                 return;
             }
 
@@ -304,9 +273,9 @@ namespace WindowsFormsApplication1
                 RefreshDrives(lstDrives, dictRemovableDrives);
                 ExecuteSecure(() => lblSelectedDrives.Text = "Drives Selected: " + lstDrives.CheckedItems.Count);  // Update drive checked count label securely
                 return;
-            }    
-            
-            // Copy completed successfully with no flagged bools, so continue            
+            }
+
+            // Copy completed successfully with no flagged bools, so continue
             PictureBox1.Visible = true;
 
             // Check how many drives were copied and set status accordingly
@@ -334,6 +303,42 @@ namespace WindowsFormsApplication1
         private void UpdateDriveCount(object sender, EventArgs e)
         {
             lblSelectedDrives.Text = "Drives Selected: " + lstDrives.CheckedItems.Count;
+        }
+
+        private int ExecuteCopy(BackgroundWorker bw)
+        {
+            int result = 0;
+            // Start copy execution
+
+            while (!bw.CancellationPending)
+            {
+                bool exit = false;
+
+                try
+                {
+                    foreach (string t in listDrivesToCopy)
+                    {
+                        FileSystem.CopyDirectory(sourceDir, t, UIOption.AllDialogs, UICancelOption.ThrowException);
+                    }
+                }
+                catch (ArgumentException)  // Catch user removal of drive during copy and set bool flag for RunWorkerCompleted to process
+                {
+                    argExceptionError = true;
+                    exit = true;
+                }
+                catch (OperationCanceledException)  // Catch user cancelling copy and set bool flag for RunWorkerCompleted to process
+                {
+                    e.Cancel = true;
+                    exit = true;
+                }
+                
+                if (exit)
+                {
+                    break;
+                } 
+            }
+
+            return result;
         }
     }
 }
