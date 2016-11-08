@@ -16,13 +16,13 @@ using System.Configuration;
 namespace WindowsFormsApplication1
 {
     public partial class Main : Form
-    {        
+    {
         Dictionary<string, string> dictRemovableDrives = new Dictionary<string, string>();
-        List<string> listDrivesToCopy                  = new List<string>();
-        bool argExceptionError                         = false;
+        List<string> listDrivesToCopy = new List<string>();
+        bool argExceptionError = false;
         string sourceDir;
         int currDriveCount;
-              
+
 
         public Main()
         {
@@ -41,7 +41,7 @@ namespace WindowsFormsApplication1
             else
                 a();
         }
-        
+
         /// <summary>
         /// Format a long number into a readable string; i.e. input: 15520 output: "15.52 KB"
         /// </summary>
@@ -52,7 +52,7 @@ namespace WindowsFormsApplication1
         {
             const int scale = 1024;
             string[] orders = new string[] { "GB", "MB", "KB", "Bytes" };
-            long max        = (long)Math.Pow(scale, orders.Length - 1);
+            long max = (long)Math.Pow(scale, orders.Length - 1);
 
             foreach (string order in orders)
             {
@@ -76,7 +76,7 @@ namespace WindowsFormsApplication1
                 list.SetItemChecked(i, choice);
             }
         }
-                        
+
         private void Form1_Load(object sender, EventArgs e)
         {
             // Populate listbox with removable drives
@@ -98,7 +98,7 @@ namespace WindowsFormsApplication1
             IEnumerable<DriveInfo> drives =
                 from d in DriveInfo.GetDrives()
                 where d.DriveType == DriveType.Removable &&
-                      d.IsReady   == true
+                      d.IsReady == true
                 select d;
 
             // If no removable drives detected, exit method
@@ -107,18 +107,18 @@ namespace WindowsFormsApplication1
             // Iterate through collection, add drive name and drive information to dictionary
             foreach (var drive in drives)
             {
-                var freeSpace  = FormatBytes(drive.TotalFreeSpace);
+                var freeSpace = FormatBytes(drive.TotalFreeSpace);
                 var totalSpace = FormatBytes(drive.TotalSize);
-                var drvInfo    = String.Format("{0} - ( Label: {1}, FileSystem: {2}, Size: {3}, Free: {4} )",
+                var drvInfo = String.Format("{0} - ( Label: {1}, FileSystem: {2}, Size: {3}, Free: {4} )",
                                  drive.Name, drive.VolumeLabel, drive.DriveFormat,
                                  totalSpace, freeSpace);
                 dict.Add(drive.Name, drvInfo);
             }
 
             // Bind dictionary as CheckedListBox DataSource and set other properties
-            clb.DataSource    = new BindingSource(dictRemovableDrives, null);            
+            clb.DataSource = new BindingSource(dictRemovableDrives, null);
             clb.DisplayMember = "Value";
-            clb.ValueMember   = "Key";
+            clb.ValueMember = "Key";
             ExecuteSecure(() => lblSelectedDrives.Text = "Drives Selected: " + lstDrives.CheckedItems.Count);  // Update drive checked count label securely
         }
 
@@ -140,7 +140,7 @@ namespace WindowsFormsApplication1
         }
 
         private void btnSelectAll_Click(object sender, EventArgs e)
-         // Sets check state for all listed drives to true.
+        // Sets check state for all listed drives to true.
         {
             SetCheckState(lstDrives, true);
             UpdateDriveCount(sender, e);
@@ -153,7 +153,7 @@ namespace WindowsFormsApplication1
             UpdateDriveCount(sender, e);
         }
 
-         private void btnRefreshDrives_Click(object sender, EventArgs e)
+        private void btnRefreshDrives_Click(object sender, EventArgs e)
         // Detects removable drives and displays in CheckedListBox
         {
             RefreshDrives(lstDrives, dictRemovableDrives);
@@ -163,23 +163,23 @@ namespace WindowsFormsApplication1
         // Does some error checking on user input, and kicks off the BackgroundWorker
         {
             // Set UI properties and other vars
-            PictureBox1.Visible         = false;
-            argExceptionError           = false;
-            sourceDir                   = txtSourceDir.Text;
+            PictureBox1.Visible = false;
+            argExceptionError = false;
+            sourceDir = txtSourceDir.Text;
 
             // If source directory is not a valid directory, exit method
             if (!Directory.Exists(txtSourceDir.Text))
             {
                 MessageBox.Show("Please select a valid source directory.", "USB Batch Copy", MessageBoxButtons.OK);
                 return;
-            }            
+            }
 
             // If no drives are checked in CheckedListBox, exit method 
             if (lstDrives.CheckedItems.Count == 0)
             {
                 MessageBox.Show("Please select at least one destination drive.", "USB Batch Copy", MessageBoxButtons.OK);
                 return;
-            }         
+            }
 
             // Add checked items in CheckedListBox to list object
             PopulateListOfDrives(lstDrives, listDrivesToCopy);
@@ -197,8 +197,8 @@ namespace WindowsFormsApplication1
 
             // Set some properties and variables            
             btnStartCopy.Enabled = false;
-            lblStatus.Text       = "Copying...";
-            lblStatus.ForeColor  = Color.Black;                                  
+            lblStatus.Text = "Copying...";
+            lblStatus.ForeColor = Color.Black;
 
             // Begin the copy in BackgroundWorker
             backgroundWorker1.RunWorkerAsync();
@@ -210,14 +210,14 @@ namespace WindowsFormsApplication1
 
             if (fbd.ShowDialog() == DialogResult.OK)
             {
-                txtSourceDir.Text = fbd.SelectedPath;                    
+                txtSourceDir.Text = fbd.SelectedPath;
             }
         }
 
         private void tmrRefresh_Tick(object sender, EventArgs e)
         {
             lblSelectedDrives.Text = "Drives Selected: " + lstDrives.CheckedItems.Count;
-                        
+
             // AUTOMATIC REFRESH of drive list -- Edit config file to enable/disable
             if (ConfigurationManager.AppSettings["autoRefresh"] == "1")
             {
@@ -232,7 +232,7 @@ namespace WindowsFormsApplication1
                     RefreshDrives(lstDrives, dictRemovableDrives);
                 }
 
-                currDriveCount = drives.Count();                                
+                currDriveCount = drives.Count();
             }
 
             //GC.Collect();
@@ -242,13 +242,22 @@ namespace WindowsFormsApplication1
         {
             BackgroundWorker bw = sender as BackgroundWorker;
 
-            e.Result = ExecuteCopy(bw);
-
-            if (bw.CancellationPending)
+            // Start copy execution
+            try
+            {
+                foreach (string t in listDrivesToCopy)
+                {
+                    FileSystem.CopyDirectory(sourceDir, t, UIOption.AllDialogs, UICancelOption.ThrowException);
+                }
+            }
+            catch (ArgumentException)  // Catch user removal of drive during copy and set bool flag for RunWorkerCompleted to process
+            {
+                argExceptionError = true;
+            }
+            catch (OperationCanceledException)  // Catch user cancelling copy and set bool flag for RunWorkerCompleted to process
             {
                 e.Cancel = true;
             }
-            
         }
 
         private void backgroundWorker1_RunWorkerCompleted(object sender, System.ComponentModel.RunWorkerCompletedEventArgs e)
@@ -269,7 +278,7 @@ namespace WindowsFormsApplication1
             {
                 MessageBox.Show("An error has occured.  Please try again.");
                 lblStatus.ForeColor = Color.Black;
-                lblStatus.Text      = "Ready";
+                lblStatus.Text = "Ready";
                 RefreshDrives(lstDrives, dictRemovableDrives);
                 ExecuteSecure(() => lblSelectedDrives.Text = "Drives Selected: " + lstDrives.CheckedItems.Count);  // Update drive checked count label securely
                 return;
@@ -303,42 +312,6 @@ namespace WindowsFormsApplication1
         private void UpdateDriveCount(object sender, EventArgs e)
         {
             lblSelectedDrives.Text = "Drives Selected: " + lstDrives.CheckedItems.Count;
-        }
-
-        private int ExecuteCopy(BackgroundWorker bw)
-        {
-            int result = 0;
-            // Start copy execution
-
-            while (!bw.CancellationPending)
-            {
-                bool exit = false;
-
-                try
-                {
-                    foreach (string t in listDrivesToCopy)
-                    {
-                        FileSystem.CopyDirectory(sourceDir, t, UIOption.AllDialogs, UICancelOption.ThrowException);
-                    }
-                }
-                catch (ArgumentException)  // Catch user removal of drive during copy and set bool flag for RunWorkerCompleted to process
-                {
-                    argExceptionError = true;
-                    exit = true;
-                }
-                catch (OperationCanceledException)  // Catch user cancelling copy and set bool flag for RunWorkerCompleted to process
-                {
-                    e.Cancel = true;
-                    exit = true;
-                }
-                
-                if (exit)
-                {
-                    break;
-                } 
-            }
-
-            return result;
         }
     }
 }
