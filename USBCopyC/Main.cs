@@ -80,6 +80,13 @@ namespace WindowsFormsApplication1
 
         private void Form1_Load(object sender, EventArgs e)
         {
+            if (ConfigurationManager.AppSettings["autoRefresh"] == "1")
+            {
+                btnRefreshDrives.Font = new System.Drawing.Font("Arial", 8.25F, System.Drawing.FontStyle.Italic, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+                btnRefreshDrives.Text = "Auto-Detect On";
+                btnRefreshDrives.Enabled = false;
+            }
+
             // Populate listbox with removable drives
             RefreshDrives(lstDrives, dictRemovableDrives);
         }
