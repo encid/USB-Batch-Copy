@@ -425,7 +425,7 @@ namespace WindowsFormsApplication1
                         drvLabel = "vault";
                         break;
                     case "H":
-                        drvLabel = "user";
+                        drvLabel = @"users\" + Environment.UserName;
                         break;
                     default:
                         if (drvLabel == "")
