@@ -13,14 +13,19 @@ using System.Windows.Forms;
 using System.Configuration;
 using System.Management;
 using Microsoft.Win32;
-using System.Text;
 using System.Runtime.InteropServices;
 
 namespace WindowsFormsApplication1
 {
     public partial class Main : Form
     {
-        public const string SHELL = "shell32.dll";
+        const string SHELL = "shell32.dll";
+        Dictionary<string, string> dictRemovableDrives = new Dictionary<string, string>();
+        FolderBrowserDialog fbd = new FolderBrowserDialog();
+        List<string> listDrivesToCopy = new List<string>();
+        bool argExceptionError = false;
+        string sourceDir;
+        int currDriveCount;
 
         [DllImport(SHELL, CharSet = CharSet.Unicode)]
         public static extern uint SHParseDisplayName(string pszName, IntPtr zero, [Out] out IntPtr ppidl, uint sfgaoIn, [Out] out uint psfgaoOut);
@@ -41,18 +46,32 @@ namespace WindowsFormsApplication1
             PARENTRELATIVE = 0x80080001
         }
 
-        Dictionary<string, string> dictRemovableDrives = new Dictionary<string, string>();
-        FolderBrowserDialog fbd                        = new FolderBrowserDialog();
-        List<string> listDrivesToCopy                  = new List<string>();
-        bool argExceptionError                         = false;
-        string sourceDir;
-        int currDriveCount;
-        
-
         public Main()
         {
             InitializeComponent();
-            PopulateTreeView();
+            PopulateTreeView();  // Add drives to TreeView
+
+            // Keep selected node highlighted if TreeView control loses focus            
+            this.dirsTreeView.BeforeExpand += new TreeViewCancelEventHandler(this.dirsTreeView_BeforeExpand);            
+            dirsTreeView.DrawNode += (o, e) =>
+                {
+                    if (!e.Node.TreeView.Focused && e.Node == e.Node.TreeView.SelectedNode)
+                    {
+                        Font treeFont = e.Node.NodeFont ?? e.Node.TreeView.Font;
+                        e.Graphics.FillRectangle(SystemBrushes.Highlight, e.Bounds);
+                        ControlPaint.DrawFocusRectangle(e.Graphics, e.Bounds, SystemColors.HighlightText, SystemColors.Highlight);
+                        TextRenderer.DrawText(e.Graphics, e.Node.Text, treeFont, e.Bounds, SystemColors.HighlightText, TextFormatFlags.GlyphOverhangPadding);
+                    }
+                    else
+                        e.DrawDefault = true;
+                };
+            dirsTreeView.MouseDown += (o, e) =>
+                {
+                    TreeNode node = dirsTreeView.GetNodeAt(e.X, e.Y);
+                    if (node != null && node.Bounds.Contains(e.X, e.Y))
+                        dirsTreeView.SelectedNode = node;
+                };
+            //this.dirsTreeView.DrawNode += new System.Windows.Forms.DrawTreeNodeEventHandler(this.treeView1_DrawNode);
         }
 
         /// <summary>
@@ -253,18 +272,7 @@ namespace WindowsFormsApplication1
             // Begin the copy in BackgroundWorker
             backgroundWorker1.RunWorkerAsync();
         }
-
-        /*private void btnBrowse_Click(object sender, EventArgs e)
-        {            
-            if (fbd.SelectedPath == "") { fbd.SelectedPath = @"V:\Released_Part_Information\"; }            
-            
-            if (fbd.ShowDialog() == DialogResult.OK)
-            {
-                txtSourceDir.Text = fbd.SelectedPath;
-            }
-        }
-        */
-
+                
         private void tmrRefresh_Tick(object sender, EventArgs e)
         {
             lblSelectedDrives.Text = string.Format("Drives Selected: {0}", lstDrives.CheckedItems.Count);
@@ -317,8 +325,8 @@ namespace WindowsFormsApplication1
         {
             // Enable UI controls            
             if (ConfigurationManager.AppSettings["autoRefresh"] == "0") { btnRefreshDrives.Enabled = true; }
-            btnStartCopy .Enabled  = true;
             //btnBrowse    .Enabled  = true;
+            btnStartCopy.Enabled = true;
             btnSelectAll .Enabled  = true;
             btnSelectNone.Enabled  = true;
             btnStartCopy .Enabled  = true;
@@ -368,26 +376,27 @@ namespace WindowsFormsApplication1
 
         private void PopulateTreeView()
         {
-            //get a list of the drives
+            // Get a list of the drives
             string[] drives = Environment.GetLogicalDrives();
             
-
+            // Iterate through drives to set icons
             foreach (string drive in drives)
             {
                 DriveInfo di = new DriveInfo(drive);
-                string drvName = "";
+                string drvLabel = "";
                 int driveImage;
                 string spc = "";
 
-                switch (di.DriveType)    //set the drive's icon
+                // Set drive's icon
+                switch (di.DriveType)
                 {
                     case DriveType.CDRom:
                         driveImage = 3;
-                        drvName = "CD_ROM";
+                        drvLabel = "CD_ROM";
                         break;
                     case DriveType.Removable:
                         driveImage = 5;
-                        drvName = "Removable Disk";
+                        drvLabel = "Removable Disk";
                         break;
                     case DriveType.Network:
                         driveImage = 6;
@@ -403,29 +412,30 @@ namespace WindowsFormsApplication1
                         break;
                 }
 
+                // Set drive labels
                 switch (di.Name.Substring(0, 1))
                 {
                     case "C":
-                        drvName = "Local Disk";
+                        drvLabel = "Local Disk";
                         break;
                     case "S":
-                        drvName = "shared";
+                        drvLabel = "shared";
                         break;
                     case "V":
-                        drvName = "vault";
+                        drvLabel = "vault";
                         break;
                     case "H":
-                        drvName = "user";
+                        drvLabel = "user";
                         break;
                     default:
-                        if (drvName == "")
+                        if (drvLabel == "")
                         {
-                            drvName = di.VolumeLabel;
+                            drvLabel = di.VolumeLabel;
                         }                        
                         break;
                 }
 
-                if (drvName != "")
+                if (drvLabel != "")
                 {
                     spc = " ";
                 }
@@ -434,7 +444,7 @@ namespace WindowsFormsApplication1
                     spc = "";
                 }
                                               
-                TreeNode node = new TreeNode(drvName + spc + "(" + di.Name + ")", driveImage, driveImage);
+                TreeNode node = new TreeNode(drvLabel + spc + "(" + di.Name + ")", driveImage, driveImage);
                 
                 //TreeNode node = new TreeNode(GetDriveLabel(di), driveImage, driveImage);
                 //TreeNode node = new TreeNode(GetDriveLabels(di.Name) + " (" + di.Name + ")", driveImage, driveImage);
@@ -445,8 +455,7 @@ namespace WindowsFormsApplication1
                     node.Nodes.Add("...");
 
                 dirsTreeView.Nodes.Add(node);
-            }
-
+            }         
         }            
 
         private void treeView1_DrawNode(object sender, DrawTreeNodeEventArgs e)

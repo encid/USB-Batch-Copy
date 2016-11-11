@@ -203,6 +203,7 @@
             // 
             this.dirsTreeView.DrawMode = System.Windows.Forms.TreeViewDrawMode.OwnerDrawText;
             this.dirsTreeView.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.dirsTreeView.ForeColor = System.Drawing.SystemColors.ControlText;
             this.dirsTreeView.HideSelection = false;
             this.dirsTreeView.ImageIndex = 0;
             this.dirsTreeView.ImageList = this.imageList1;
@@ -213,8 +214,6 @@
             this.dirsTreeView.StateImageList = this.imageList1;
             this.dirsTreeView.TabIndex = 1;
             this.dirsTreeView.TabStop = false;
-            this.dirsTreeView.BeforeExpand += new System.Windows.Forms.TreeViewCancelEventHandler(this.dirsTreeView_BeforeExpand);
-            this.dirsTreeView.DrawNode += new System.Windows.Forms.DrawTreeNodeEventHandler(this.treeView1_DrawNode);
             // 
             // imageList1
             // 
