@@ -13,11 +13,34 @@ using System.Windows.Forms;
 using System.Configuration;
 using System.Management;
 using Microsoft.Win32;
+using System.Text;
+using System.Runtime.InteropServices;
 
 namespace WindowsFormsApplication1
 {
     public partial class Main : Form
     {
+        public const string SHELL = "shell32.dll";
+
+        [DllImport(SHELL, CharSet = CharSet.Unicode)]
+        public static extern uint SHParseDisplayName(string pszName, IntPtr zero, [Out] out IntPtr ppidl, uint sfgaoIn, [Out] out uint psfgaoOut);
+
+        [DllImport(SHELL, CharSet = CharSet.Unicode)]
+        public static extern uint SHGetNameFromIDList(IntPtr pidl, SIGDN sigdnName, [Out] out String ppszName);
+
+        public enum SIGDN : uint
+        {
+            NORMALDISPLAY = 0x00000000,
+            PARENTRELATIVEPARSING = 0x80018001,
+            DESKTOPABSOLUTEPARSING = 0x80028000,
+            PARENTRELATIVEEDITING = 0x80031001,
+            DESKTOPABSOLUTEEDITING = 0x8004c000,
+            FILESYSPATH = 0x80058000,
+            URL = 0x80068000,
+            PARENTRELATIVEFORADDRESSBAR = 0x8007c001,
+            PARENTRELATIVE = 0x80080001
+        }
+
         Dictionary<string, string> dictRemovableDrives = new Dictionary<string, string>();
         FolderBrowserDialog fbd                        = new FolderBrowserDialog();
         List<string> listDrivesToCopy                  = new List<string>();
@@ -347,16 +370,24 @@ namespace WindowsFormsApplication1
         {
             //get a list of the drives
             string[] drives = Environment.GetLogicalDrives();
+            
 
             foreach (string drive in drives)
             {
                 DriveInfo di = new DriveInfo(drive);
+                string drvName = "";
                 int driveImage;
+                string spc = "";
 
                 switch (di.DriveType)    //set the drive's icon
                 {
                     case DriveType.CDRom:
                         driveImage = 3;
+                        drvName = "CD_ROM";
+                        break;
+                    case DriveType.Removable:
+                        driveImage = 5;
+                        drvName = "Removable Disk";
                         break;
                     case DriveType.Network:
                         driveImage = 6;
@@ -372,7 +403,42 @@ namespace WindowsFormsApplication1
                         break;
                 }
 
-                TreeNode node = new TreeNode(GetDriveLabel(di), driveImage, driveImage);
+                switch (di.Name.Substring(0, 1))
+                {
+                    case "C":
+                        drvName = "Local Disk";
+                        break;
+                    case "S":
+                        drvName = "shared";
+                        break;
+                    case "V":
+                        drvName = "vault";
+                        break;
+                    case "H":
+                        drvName = "user";
+                        break;
+                    default:
+                        if (drvName == "")
+                        {
+                            drvName = di.VolumeLabel;
+                        }                        
+                        break;
+                }
+
+                if (drvName != "")
+                {
+                    spc = " ";
+                }
+                else
+                {
+                    spc = "";
+                }
+                                              
+                TreeNode node = new TreeNode(drvName + spc + "(" + di.Name + ")", driveImage, driveImage);
+                
+                //TreeNode node = new TreeNode(GetDriveLabel(di), driveImage, driveImage);
+                //TreeNode node = new TreeNode(GetDriveLabels(di.Name) + " (" + di.Name + ")", driveImage, driveImage);
+
                 node.Tag = drive;
 
                 if (di.IsReady == true)
@@ -452,7 +518,7 @@ namespace WindowsFormsApplication1
             try
             {
                 var searcher = new ManagementObjectSearcher(
-                    "root\\CIMV2",
+                    @"root\CIMV2",
                     "SELECT * FROM Win32_MappedLogicalDisk WHERE Name=\"" + drv.Name.Substring(0, 2) + "\"");
 
                 foreach (ManagementObject queryObj in searcher.Get())
@@ -483,7 +549,20 @@ namespace WindowsFormsApplication1
                 return drvName;
             }
         }
-       
+
+        public string GetDriveLabels(string driveNameAsLetterColonBackslash)
+        {
+            IntPtr pidl;
+            uint dummy;
+            string name;
+            if (SHParseDisplayName(driveNameAsLetterColonBackslash, IntPtr.Zero, out pidl, 0, out dummy) == 0
+                && SHGetNameFromIDList(pidl, SIGDN.PARENTRELATIVEEDITING, out name) == 0
+                && name != null)
+            {
+                return name;
+            }
+            return null;
+        }
 
     }
 }
