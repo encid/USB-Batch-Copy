@@ -11,6 +11,8 @@ using System.IO;
 using System.Linq;
 using System.Windows.Forms;
 using System.Configuration;
+using System.Management;
+using Microsoft.Win32;
 
 namespace WindowsFormsApplication1
 {
@@ -27,6 +29,7 @@ namespace WindowsFormsApplication1
         public Main()
         {
             InitializeComponent();
+            PopulateTreeView();
         }
 
         /// <summary>
@@ -169,14 +172,28 @@ namespace WindowsFormsApplication1
             // Set UI properties and other vars
             PictureBox1.Visible = false;
             argExceptionError   = false;
-            sourceDir           = txtSourceDir.Text;
+            TreeNode aNode = dirsTreeView.SelectedNode;
+            //sourceDir           = txtSourceDir.Text;
 
+            /*
             // If source directory is not a valid directory, exit method
             if (!Directory.Exists(txtSourceDir.Text))
             {
                 MessageBox.Show("Please select a valid source directory.", "USB Batch Copy", MessageBoxButtons.OK);
                 return;
             }
+            */
+
+            // Check to make sure user has selected a source folder, if not, exit method
+            if (aNode != null)
+            {
+                sourceDir = (string)aNode.Tag;
+            }
+            else
+            { 
+                MessageBox.Show("Please select a valid source directory.", "USB Batch Copy", MessageBoxButtons.OK);
+                return;
+            }       
 
             // If no drives are checked in CheckedListBox, exit method 
             if (lstDrives.CheckedItems.Count == 0)
@@ -184,7 +201,7 @@ namespace WindowsFormsApplication1
                 MessageBox.Show("Please select at least one destination drive.", "USB Batch Copy", MessageBoxButtons.OK);
                 return;
             }
-
+            
             // Add checked items in CheckedListBox to list object
             PopulateListOfDrives(lstDrives, listDrivesToCopy);
 
@@ -200,20 +217,21 @@ namespace WindowsFormsApplication1
             }
 
             // Disable UI controls and set some variables    
-            btnRefreshDrives.Enabled        = false;
-            btnBrowse       .Enabled        = false;
-            btnSelectAll    .Enabled        = false;
-            btnSelectNone   .Enabled        = false;
-            btnStartCopy    .Enabled        = false;
-            lstDrives       .Enabled        = false;
-            lblStatus       .Text           = "Copying...";
-            lblStatus       .ForeColor      = Color.Black;
+            if (ConfigurationManager.AppSettings["autoRefresh"] == "0") { btnRefreshDrives.Enabled = false; }
+            //btnBrowse    .Enabled   = false;
+            btnSelectAll .Enabled   = false;
+            btnSelectNone.Enabled   = false;
+            btnStartCopy .Enabled   = false;
+            lstDrives    .Enabled   = false;
+            dirsTreeView. Enabled   = false;
+            lblStatus    .Text      = "Copying...";
+            lblStatus    .ForeColor = Color.Black;
 
             // Begin the copy in BackgroundWorker
             backgroundWorker1.RunWorkerAsync();
         }
 
-        private void btnBrowse_Click(object sender, EventArgs e)
+        /*private void btnBrowse_Click(object sender, EventArgs e)
         {            
             if (fbd.SelectedPath == "") { fbd.SelectedPath = @"V:\Released_Part_Information\"; }            
             
@@ -222,6 +240,7 @@ namespace WindowsFormsApplication1
                 txtSourceDir.Text = fbd.SelectedPath;
             }
         }
+        */
 
         private void tmrRefresh_Tick(object sender, EventArgs e)
         {
@@ -273,14 +292,16 @@ namespace WindowsFormsApplication1
 
         private void backgroundWorker1_RunWorkerCompleted(object sender, System.ComponentModel.RunWorkerCompletedEventArgs e)
         {
-            // Enable UI controls
-            btnStartCopy    .Enabled        = true;
-            btnRefreshDrives.Enabled        = true;
-            btnBrowse       .Enabled        = true;
-            btnSelectAll    .Enabled        = true;
-            btnSelectNone   .Enabled        = true;
-            btnStartCopy    .Enabled        = true;
-            lstDrives       .Enabled        = true;
+            // Enable UI controls            
+            if (ConfigurationManager.AppSettings["autoRefresh"] == "0") { btnRefreshDrives.Enabled = true; }
+            btnStartCopy .Enabled  = true;
+            //btnBrowse    .Enabled  = true;
+            btnSelectAll .Enabled  = true;
+            btnSelectNone.Enabled  = true;
+            btnStartCopy .Enabled  = true;
+            lstDrives    .Enabled  = true;
+            dirsTreeView. Enabled  = true;
+
 
             // Checks for cancelled flag from BackgroundWorker1_DoWork and raises events / sets UI control properties appropriately
             if (e.Cancelled)
@@ -321,5 +342,148 @@ namespace WindowsFormsApplication1
             // Kick off SelectAll asynchronously so that it occurs after Click
             ExecuteSecure(() => txtSourceDir.SelectAll());            
         }
+
+        private void PopulateTreeView()
+        {
+            //get a list of the drives
+            string[] drives = Environment.GetLogicalDrives();
+
+            foreach (string drive in drives)
+            {
+                DriveInfo di = new DriveInfo(drive);
+                int driveImage;
+
+                switch (di.DriveType)    //set the drive's icon
+                {
+                    case DriveType.CDRom:
+                        driveImage = 3;
+                        break;
+                    case DriveType.Network:
+                        driveImage = 6;
+                        break;
+                    case DriveType.NoRootDirectory:
+                        driveImage = 8;
+                        break;
+                    case DriveType.Unknown:
+                        driveImage = 8;
+                        break;
+                    default:
+                        driveImage = 2;
+                        break;
+                }
+
+                TreeNode node = new TreeNode(GetDriveLabel(di), driveImage, driveImage);
+                node.Tag = drive;
+
+                if (di.IsReady == true)
+                    node.Nodes.Add("...");
+
+                dirsTreeView.Nodes.Add(node);
+            }
+
+        }            
+
+        private void treeView1_DrawNode(object sender, DrawTreeNodeEventArgs e)
+        {
+            e.DrawDefault = true;
+        }
+
+        private void dirsTreeView_BeforeExpand(object sender, TreeViewCancelEventArgs e)
+        {
+            if (e.Node.Nodes.Count > 0)
+            {
+                if (e.Node.Nodes[0].Text == "..." && e.Node.Nodes[0].Tag == null)
+                {
+                    e.Node.Nodes.Clear();
+
+                    //get the list of sub direcotires
+                    IEnumerable<string> dirs = Directory.EnumerateDirectories((string)e.Node.Tag);
+
+                    foreach (string dir in dirs)
+                    {
+                        DirectoryInfo di = new DirectoryInfo(dir);
+                        TreeNode node = new TreeNode(di.Name, 0, 1);
+
+                        try
+                        {
+                            node.Tag = dir;  //keep the directory's full path in the tag for use later
+
+                            //if the directory has any sub directories add the place holder
+                            if (di.GetDirectories().Count() > 0)
+                                node.Nodes.Add(null, "...", 0, 0);
+                        }
+                        catch (UnauthorizedAccessException)
+                        {
+                            //if an unauthorized access exception occured display a locked folder
+                            node.ImageIndex = 12;
+                            node.SelectedImageIndex = 12;
+                        }
+                        catch (Exception ex)
+                        {
+                            MessageBox.Show(ex.Message, "USB Batch Copy", MessageBoxButtons.OK,
+                                MessageBoxIcon.Error);
+                        }
+                        finally
+                        {
+                            e.Node.Nodes.Add(node);
+                        }
+                    }
+                }
+            }
+        }
+
+        private string GetDriveLabel(DriveInfo drv)
+        {
+            string drvName;
+            string drvLabel;
+            string pvdr = "";
+
+            //Start off with just the drive letter
+            drvName = "(" + drv.Name.Substring(0, 2) + ")";
+
+            //Use the volume label if it is not a network drive
+            if (drv.DriveType != DriveType.Network)
+            {
+                drvLabel = drv.VolumeLabel;
+                return drvLabel + " " + drvName;
+            }
+
+            //Try to get the network share name            
+            try
+            {
+                var searcher = new ManagementObjectSearcher(
+                    "root\\CIMV2",
+                    "SELECT * FROM Win32_MappedLogicalDisk WHERE Name=\"" + drv.Name.Substring(0, 2) + "\"");
+
+                foreach (ManagementObject queryObj in searcher.Get())
+                {
+                    pvdr = @queryObj["ProviderName"].ToString();
+                }
+            }
+            catch (ManagementException)
+            {
+                pvdr = "";
+            }
+
+            //Try to get custom label from registry
+            if (pvdr != "")
+            {
+                pvdr = pvdr.Replace(@"\", "#");
+                drvLabel = (string)Registry.GetValue(@"HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Explorer\MountPoints2\" + pvdr, "_LabelFromReg", "");
+                if (string.IsNullOrEmpty(drvLabel))
+                {
+                    //If we didn't get the label from the registry, then extract the share name from the provider
+                    drvLabel = pvdr.Substring(pvdr.LastIndexOf("#") + 1);
+                }
+                return drvLabel + " " + drvName;
+            }
+            else
+            {
+                //No point in trying the registry if we don't have a provider name
+                return drvName;
+            }
+        }
+       
+
     }
 }
