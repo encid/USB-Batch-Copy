@@ -326,7 +326,7 @@ namespace WindowsFormsApplication1
             // Enable UI controls            
             if (ConfigurationManager.AppSettings["autoRefresh"] == "0") { btnRefreshDrives.Enabled = true; }
             //btnBrowse    .Enabled  = true;
-            btnStartCopy.Enabled = true;
+            btnStartCopy. Enabled  = true;
             btnSelectAll .Enabled  = true;
             btnSelectNone.Enabled  = true;
             btnStartCopy .Enabled  = true;
@@ -382,21 +382,20 @@ namespace WindowsFormsApplication1
             // Iterate through drives to set icons
             foreach (string drive in drives)
             {
-                DriveInfo di = new DriveInfo(drive);
-                string drvLabel = "";
+                DriveInfo di    = new DriveInfo(drive);
+                string drvLabel = string.Empty;
                 int driveImage;
-                string spc = "";
 
                 // Set drive's icon
                 switch (di.DriveType)
                 {
                     case DriveType.CDRom:
                         driveImage = 3;
-                        drvLabel = "CD_ROM";
+                        drvLabel   = "CD_ROM";
                         break;
                     case DriveType.Removable:
                         driveImage = 5;
-                        drvLabel = "Removable Disk";
+                        drvLabel   = "Removable Disk";
                         break;
                     case DriveType.Network:
                         driveImage = 6;
@@ -435,16 +434,10 @@ namespace WindowsFormsApplication1
                         break;
                 }
 
-                if (drvLabel != "")
-                {
-                    spc = " ";
-                }
-                else
-                {
-                    spc = "";
-                }
+                // If drive label exists, add a space after it
+                if (!string.IsNullOrEmpty(drvLabel)) { drvLabel = drvLabel + " "; }
                                               
-                TreeNode node = new TreeNode(drvLabel + spc + "(" + di.Name + ")", driveImage, driveImage);
+                TreeNode node = new TreeNode(drvLabel + "(" + di.Name.Substring(0, 2) + ")", driveImage, driveImage);
                 
                 //TreeNode node = new TreeNode(GetDriveLabel(di), driveImage, driveImage);
                 //TreeNode node = new TreeNode(GetDriveLabels(di.Name) + " (" + di.Name + ")", driveImage, driveImage);
