@@ -14,6 +14,7 @@ using System.Configuration;
 using System.Management;
 using Microsoft.Win32;
 using System.Runtime.InteropServices;
+using System.Text;
 
 namespace WindowsFormsApplication1
 {
@@ -32,6 +33,10 @@ namespace WindowsFormsApplication1
 
         [DllImport(SHELL, CharSet = CharSet.Unicode)]
         public static extern uint SHGetNameFromIDList(IntPtr pidl, SIGDN sigdnName, [Out] out String ppszName);
+
+        [DllImport("mpr.dll", CharSet = CharSet.Unicode, SetLastError = true)]
+        public static extern int WNetGetConnection([MarshalAs(UnmanagedType.LPTStr)] string localName,
+                                                   [MarshalAs(UnmanagedType.LPTStr)] StringBuilder remoteName, ref int length);
 
         public enum SIGDN : uint
         {
@@ -379,16 +384,20 @@ namespace WindowsFormsApplication1
             // Get a list of the drives
             string[] drives = Environment.GetLogicalDrives();
             
-            // Iterate through drives to set icons
+            // Iterate through drives to set icons and labels
             foreach (string drive in drives)
             {
                 DriveInfo di    = new DriveInfo(drive);
                 string drvLabel = string.Empty;
                 int driveImage;
 
-                // Set drive's icon
+                // Set drive's icon and label based on drive type
                 switch (di.DriveType)
                 {
+                    case DriveType.Fixed:
+                        driveImage = 2;
+                        if (di.VolumeLabel == string.Empty) { drvLabel = "Local Disk"; } else drvLabel = di.VolumeLabel;
+                        break;
                     case DriveType.CDRom:
                         driveImage = 3;
                         drvLabel   = "CD_ROM";
@@ -398,7 +407,10 @@ namespace WindowsFormsApplication1
                         drvLabel   = "Removable Disk";
                         break;
                     case DriveType.Network:
-                        driveImage = 6;
+                        string fullUNC = GetUNCPath(di.Name.Substring(0, 2));
+                        int lastSlash  = fullUNC.LastIndexOf(@"\") + 1;
+                        drvLabel       = fullUNC.Substring(lastSlash, fullUNC.Length - lastSlash);
+                        driveImage     = 6;
                         break;
                     case DriveType.NoRootDirectory:
                         driveImage = 8;
@@ -409,39 +421,13 @@ namespace WindowsFormsApplication1
                     default:
                         driveImage = 2;
                         break;
-                }
-
-                // Set drive labels
-                switch (di.Name.Substring(0, 1))
-                {
-                    case "C":
-                        drvLabel = "Local Disk";
-                        break;
-                    case "S":
-                        drvLabel = "shared";
-                        break;
-                    case "V":
-                        drvLabel = "vault";
-                        break;
-                    case "H":
-                        drvLabel = @"users\" + Environment.UserName;
-                        break;
-                    default:
-                        if (drvLabel == "")
-                        {
-                            drvLabel = di.VolumeLabel;
-                        }                        
-                        break;
-                }
+                }                
 
                 // If drive label exists, add a space after it
                 if (!string.IsNullOrEmpty(drvLabel)) { drvLabel = drvLabel + " "; }
                                               
                 TreeNode node = new TreeNode(drvLabel + "(" + di.Name.Substring(0, 2) + ")", driveImage, driveImage);
                 
-                //TreeNode node = new TreeNode(GetDriveLabel(di), driveImage, driveImage);
-                //TreeNode node = new TreeNode(GetDriveLabels(di.Name) + " (" + di.Name + ")", driveImage, driveImage);
-
                 node.Tag = drive;
 
                 if (di.IsReady == true)
@@ -566,5 +552,59 @@ namespace WindowsFormsApplication1
             return null;
         }
 
+        public void FindUNCPaths()        {
+            DriveInfo[] dis = DriveInfo.GetDrives();            foreach (DriveInfo di in dis)
+            {               
+                DirectoryInfo dir = di.RootDirectory;
+                // "x:"
+                MessageBox.Show(GetUNCPath(dir.FullName.Substring(0, 2)));
+            }
+        }        
+        public string GetUNCPath(string path)
+        {
+            if (path.StartsWith(@"\\")) return path;
+            ManagementObject mo = new ManagementObject();
+            mo.Path = new ManagementPath(string.Format("Win32_LogicalDisk='{0}'", path));            return Convert.ToString(mo["ProviderName"]);            /*
+            //DriveType 4 = Network Drive
+            if (Convert.ToUInt32(mo["DriveType"]) == 4) return Convert.ToString(mo["ProviderName"]);
+            else return path;            */
+        }
+
+        public static string UNCPath(string path)
+        {
+            if (!path.StartsWith(@"\\"))
+            {
+                using (RegistryKey key = Registry.CurrentUser.OpenSubKey(@"Network\" + path[0]))
+                {
+                    if (key != null)
+                    {
+                        return key.GetValue("RemotePath").ToString() + path.Remove(0, 2).ToString();
+                    }
+                }
+            }
+            return path;
+        }              
+
+        public static string GetUNCPaths(string originalPath)
+        {
+            StringBuilder sb = new StringBuilder(512);
+            int size = sb.Capacity;
+
+            if (originalPath.Length > 2 && originalPath[1] == ':')
+            {
+                char c = originalPath[0];
+                if ((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z'))
+                {
+                    int error = WNetGetConnection(originalPath.Substring(0, 2), sb, ref size);
+                    if (error == 0)
+                    {
+                        DirectoryInfo dir = new DirectoryInfo(originalPath);
+                        string path = Path.GetFullPath(originalPath).Substring(Path.GetPathRoot(originalPath).Length);
+                        return Path.Combine(sb.ToString().TrimEnd(), path);
+                    }
+                }
+            }
+            return originalPath;
+        }
     }
 }
