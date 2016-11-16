@@ -12,33 +12,26 @@ using System.Linq;
 using System.Windows.Forms;
 using System.Configuration;
 using System.Management;
-using Microsoft.Win32;
-using System.Runtime.InteropServices;
-using System.Text;
 
 namespace WindowsFormsApplication1
 {
     public partial class Main : Form
     {
-        const string SHELL = "shell32.dll";
+      //const string SHELL                             = "shell32.dll";
         Dictionary<string, string> dictRemovableDrives = new Dictionary<string, string>();
-        FolderBrowserDialog fbd = new FolderBrowserDialog();
-        List<string> listDrivesToCopy = new List<string>();
-        bool argExceptionError = false;
+        FolderBrowserDialog fbd                        = new FolderBrowserDialog();
+        List<string> listDrivesToCopy                  = new List<string>();
+        bool argExceptionError                         = false;
         string sourceDir;
         int currDriveCount;
 
-        [DllImport(SHELL, CharSet = CharSet.Unicode)]
-        public static extern uint SHParseDisplayName(string pszName, IntPtr zero, [Out] out IntPtr ppidl, uint sfgaoIn, [Out] out uint psfgaoOut);
+        //[DllImport(SHELL, CharSet = CharSet.Unicode)]
+        //private static extern uint SHParseDisplayName(string pszName, IntPtr zero, [Out] out IntPtr ppidl, uint sfgaoIn, [Out] out uint psfgaoOut);
 
-        [DllImport(SHELL, CharSet = CharSet.Unicode)]
-        public static extern uint SHGetNameFromIDList(IntPtr pidl, SIGDN sigdnName, [Out] out String ppszName);
+        //[DllImport(SHELL, CharSet = CharSet.Unicode)]
+        //private static extern uint SHGetNameFromIDList(IntPtr pidl, SIGDN sigdnName, [Out] out String ppszName);
 
-        [DllImport("mpr.dll", CharSet = CharSet.Unicode, SetLastError = true)]
-        public static extern int WNetGetConnection([MarshalAs(UnmanagedType.LPTStr)] string localName,
-                                                   [MarshalAs(UnmanagedType.LPTStr)] StringBuilder remoteName, ref int length);
-
-        public enum SIGDN : uint
+      /*public enum SIGDN : uint
         {
             NORMALDISPLAY = 0x00000000,
             PARENTRELATIVEPARSING = 0x80018001,
@@ -49,7 +42,7 @@ namespace WindowsFormsApplication1
             URL = 0x80068000,
             PARENTRELATIVEFORADDRESSBAR = 0x8007c001,
             PARENTRELATIVE = 0x80080001
-        }
+        }*/
 
         public Main()
         {
@@ -76,7 +69,6 @@ namespace WindowsFormsApplication1
                     if (node != null && node.Bounds.Contains(e.X, e.Y))
                         dirsTreeView.SelectedNode = node;
                 };
-            //this.dirsTreeView.DrawNode += new System.Windows.Forms.DrawTreeNodeEventHandler(this.treeView1_DrawNode);
         }
 
         /// <summary>
@@ -86,10 +78,7 @@ namespace WindowsFormsApplication1
         private void ExecuteSecure(Action a)
         // Usage example: ExecuteSecure(() => this.someLabel.Text = "foo");
         {
-            BeginInvoke((Action)delegate
-            {
-                a();
-            });
+            BeginInvoke((Action)delegate { a(); });
         }
 
         /// <summary>
@@ -122,9 +111,7 @@ namespace WindowsFormsApplication1
         // Check or uncheck all items in CheckedListBox, choice = false for uncheck, choice = true for check
         {
             for (int i = 0; i < list.Items.Count; i++)
-            {
                 list.SetItemChecked(i, choice);
-            }
         }
 
         private void Form1_Load(object sender, EventArgs e)
@@ -190,9 +177,7 @@ namespace WindowsFormsApplication1
 
             // Iterate through KeyValuePairs in CheckedListBox and add each Key to list collection                        
             foreach (KeyValuePair<string, string> pair in clb.CheckedItems)
-            {
-                list.Add(pair.Key);
-            }
+                list.Add(pair.Key);            
         }
 
         private void btnSelectAll_Click(object sender, EventArgs e)
@@ -219,28 +204,16 @@ namespace WindowsFormsApplication1
             // Set UI properties and other vars
             PictureBox1.Visible = false;
             argExceptionError   = false;
-            TreeNode aNode = dirsTreeView.SelectedNode;
-            //sourceDir           = txtSourceDir.Text;
-
-            /*
-            // If source directory is not a valid directory, exit method
-            if (!Directory.Exists(txtSourceDir.Text))
-            {
-                MessageBox.Show("Please select a valid source directory.", "USB Batch Copy", MessageBoxButtons.OK);
-                return;
-            }
-            */
+            TreeNode aNode      = dirsTreeView.SelectedNode;
 
             // Check to make sure user has selected a source folder, if not, exit method
             if (aNode != null)
-            {
                 sourceDir = (string)aNode.Tag;
-            }
             else
-            { 
+            {
                 MessageBox.Show("Please select a valid source directory.", "USB Batch Copy", MessageBoxButtons.OK);
                 return;
-            }       
+            }
 
             // If no drives are checked in CheckedListBox, exit method 
             if (lstDrives.CheckedItems.Count == 0)
@@ -248,7 +221,7 @@ namespace WindowsFormsApplication1
                 MessageBox.Show("Please select at least one destination drive.", "USB Batch Copy", MessageBoxButtons.OK);
                 return;
             }
-            
+
             // Add checked items in CheckedListBox to list object
             PopulateListOfDrives(lstDrives, listDrivesToCopy);
 
@@ -265,7 +238,6 @@ namespace WindowsFormsApplication1
 
             // Disable UI controls and set some variables    
             if (ConfigurationManager.AppSettings["autoRefresh"] == "0") { btnRefreshDrives.Enabled = false; }
-            //btnBrowse    .Enabled   = false;
             btnSelectAll .Enabled   = false;
             btnSelectNone.Enabled   = false;
             btnStartCopy .Enabled   = false;
@@ -292,14 +264,10 @@ namespace WindowsFormsApplication1
                 select d;
 
                 if (drives.Count() != currDriveCount)
-                {
                     RefreshDrives(lstDrives, dictRemovableDrives);
-                }
 
                 currDriveCount = drives.Count();
             }
-
-            //GC.Collect();
         }
 
         private void backgroundWorker1_DoWork(object sender, System.ComponentModel.DoWorkEventArgs e)
@@ -330,14 +298,12 @@ namespace WindowsFormsApplication1
         {
             // Enable UI controls            
             if (ConfigurationManager.AppSettings["autoRefresh"] == "0") { btnRefreshDrives.Enabled = true; }
-            //btnBrowse    .Enabled  = true;
             btnStartCopy. Enabled  = true;
             btnSelectAll .Enabled  = true;
             btnSelectNone.Enabled  = true;
             btnStartCopy .Enabled  = true;
             lstDrives    .Enabled  = true;
             dirsTreeView. Enabled  = true;
-
 
             // Checks for cancelled flag from BackgroundWorker1_DoWork and raises events / sets UI control properties appropriately
             if (e.Cancelled)
@@ -363,22 +329,14 @@ namespace WindowsFormsApplication1
 
             // Check how many drives were copied and set status accordingly
             if (lstDrives.CheckedItems.Count == 1)
-            {
                 lblStatus.Text = "Success! Copied to 1 drive.";
-            }
             else
                 lblStatus.Text = string.Format("Success! Copied to {0} drives.", listDrivesToCopy.Count());
 
             lblStatus.ForeColor = Color.Green;
             SetCheckState(lstDrives, false);
         }
-
-        private void txtSourceDir_Enter(object sender, EventArgs e)
-        {
-            // Kick off SelectAll asynchronously so that it occurs after Click
-            ExecuteSecure(() => txtSourceDir.SelectAll());            
-        }
-
+        
         private void PopulateTreeView()
         {
             // Get a list of the drives
@@ -396,7 +354,9 @@ namespace WindowsFormsApplication1
                 {
                     case DriveType.Fixed:
                         driveImage = 2;
-                        if (di.VolumeLabel == string.Empty) { drvLabel = "Local Disk"; } else drvLabel = di.VolumeLabel;
+                        if (di.VolumeLabel == string.Empty)
+                            drvLabel = "Local Disk";
+                        else drvLabel = di.VolumeLabel;
                         break;
                     case DriveType.CDRom:
                         driveImage = 3;
@@ -409,7 +369,9 @@ namespace WindowsFormsApplication1
                     case DriveType.Network:
                         string fullUNC = GetUNCPath(di.Name.Substring(0, 2));
                         int lastSlash  = fullUNC.LastIndexOf(@"\") + 1;
-                        drvLabel       = fullUNC.Substring(lastSlash, fullUNC.Length - lastSlash);
+                        string netPath = fullUNC.Substring(0, lastSlash - 1);
+                        drvLabel       = fullUNC.Substring(lastSlash, fullUNC.Length - lastSlash);                        
+                        drvLabel       = drvLabel + " (" + netPath + ")";
                         driveImage     = 6;
                         break;
                     case DriveType.NoRootDirectory:
@@ -435,11 +397,6 @@ namespace WindowsFormsApplication1
 
                 dirsTreeView.Nodes.Add(node);
             }         
-        }            
-
-        private void treeView1_DrawNode(object sender, DrawTreeNodeEventArgs e)
-        {
-            e.DrawDefault = true;
         }
 
         private void dirsTreeView_BeforeExpand(object sender, TreeViewCancelEventArgs e)
@@ -451,12 +408,13 @@ namespace WindowsFormsApplication1
                     e.Node.Nodes.Clear();
 
                     //get the list of sub direcotires
-                    IEnumerable<string> dirs = Directory.EnumerateDirectories((string)e.Node.Tag);
+                    //IEnumerable<string> dirs = Directory.EnumerateDirectories((string)e.Node.Tag);
+                    List<string> dirs = new List<string>(Directory.GetDirectories((string)e.Node.Tag));
 
                     foreach (string dir in dirs)
                     {
-                        DirectoryInfo di = new DirectoryInfo(dir);
-                        TreeNode node = new TreeNode(di.Name, 0, 1);
+                        var di = new DirectoryInfo(dir);
+                        var node = new TreeNode(di.Name, 0, 1);
 
                         try
                         {
@@ -486,59 +444,16 @@ namespace WindowsFormsApplication1
             }
         }
 
-        private string GetDriveLabel(DriveInfo drv)
+        public static string GetUNCPath(string path)
         {
-            string drvName;
-            string drvLabel;
-            string pvdr = "";
+            if (path.StartsWith(@"\\")) return path;
 
-            //Start off with just the drive letter
-            drvName = "(" + drv.Name.Substring(0, 2) + ")";
-
-            //Use the volume label if it is not a network drive
-            if (drv.DriveType != DriveType.Network)
-            {
-                drvLabel = drv.VolumeLabel;
-                return drvLabel + " " + drvName;
-            }
-
-            //Try to get the network share name            
-            try
-            {
-                var searcher = new ManagementObjectSearcher(
-                    @"root\CIMV2",
-                    "SELECT * FROM Win32_MappedLogicalDisk WHERE Name=\"" + drv.Name.Substring(0, 2) + "\"");
-
-                foreach (ManagementObject queryObj in searcher.Get())
-                {
-                    pvdr = @queryObj["ProviderName"].ToString();
-                }
-            }
-            catch (ManagementException)
-            {
-                pvdr = "";
-            }
-
-            //Try to get custom label from registry
-            if (pvdr != "")
-            {
-                pvdr = pvdr.Replace(@"\", "#");
-                drvLabel = (string)Registry.GetValue(@"HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Explorer\MountPoints2\" + pvdr, "_LabelFromReg", "");
-                if (string.IsNullOrEmpty(drvLabel))
-                {
-                    //If we didn't get the label from the registry, then extract the share name from the provider
-                    drvLabel = pvdr.Substring(pvdr.LastIndexOf("#") + 1);
-                }
-                return drvLabel + " " + drvName;
-            }
-            else
-            {
-                //No point in trying the registry if we don't have a provider name
-                return drvName;
-            }
+            ManagementObject mo = new ManagementObject();
+            mo.Path = new ManagementPath(string.Format("Win32_LogicalDisk='{0}'", path));
+            return Convert.ToString(mo["ProviderName"]);
         }
 
-        public string GetDriveLabels(string driveNameAsLetterColonBackslash)
+        /*public string GetDriveLabels(string driveNameAsLetterColonBackslash)
         {
             IntPtr pidl;
             uint dummy;
@@ -550,61 +465,6 @@ namespace WindowsFormsApplication1
                 return name;
             }
             return null;
-        }
-
-        public void FindUNCPaths()        {
-            DriveInfo[] dis = DriveInfo.GetDrives();            foreach (DriveInfo di in dis)
-            {               
-                DirectoryInfo dir = di.RootDirectory;
-                // "x:"
-                MessageBox.Show(GetUNCPath(dir.FullName.Substring(0, 2)));
-            }
-        }        
-        public string GetUNCPath(string path)
-        {
-            if (path.StartsWith(@"\\")) return path;
-            ManagementObject mo = new ManagementObject();
-            mo.Path = new ManagementPath(string.Format("Win32_LogicalDisk='{0}'", path));            return Convert.ToString(mo["ProviderName"]);            /*
-            //DriveType 4 = Network Drive
-            if (Convert.ToUInt32(mo["DriveType"]) == 4) return Convert.ToString(mo["ProviderName"]);
-            else return path;            */
-        }
-
-        public static string UNCPath(string path)
-        {
-            if (!path.StartsWith(@"\\"))
-            {
-                using (RegistryKey key = Registry.CurrentUser.OpenSubKey(@"Network\" + path[0]))
-                {
-                    if (key != null)
-                    {
-                        return key.GetValue("RemotePath").ToString() + path.Remove(0, 2).ToString();
-                    }
-                }
-            }
-            return path;
-        }              
-
-        public static string GetUNCPaths(string originalPath)
-        {
-            StringBuilder sb = new StringBuilder(512);
-            int size = sb.Capacity;
-
-            if (originalPath.Length > 2 && originalPath[1] == ':')
-            {
-                char c = originalPath[0];
-                if ((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z'))
-                {
-                    int error = WNetGetConnection(originalPath.Substring(0, 2), sb, ref size);
-                    if (error == 0)
-                    {
-                        DirectoryInfo dir = new DirectoryInfo(originalPath);
-                        string path = Path.GetFullPath(originalPath).Substring(Path.GetPathRoot(originalPath).Length);
-                        return Path.Combine(sb.ToString().TrimEnd(), path);
-                    }
-                }
-            }
-            return originalPath;
-        }
+        }*/       
     }
 }

@@ -34,8 +34,6 @@
             this.btnSelectAll = new System.Windows.Forms.Button();
             this.btnSelectNone = new System.Windows.Forms.Button();
             this.btnRefreshDrives = new System.Windows.Forms.Button();
-            this.txtSourceDir = new System.Windows.Forms.TextBox();
-            this.btnBrowse = new System.Windows.Forms.Button();
             this.btnStartCopy = new System.Windows.Forms.Button();
             this.lblSelectedDrives = new System.Windows.Forms.Label();
             this.lstDrives = new System.Windows.Forms.CheckedListBox();
@@ -102,33 +100,6 @@
             this.btnRefreshDrives.UseVisualStyleBackColor = true;
             this.btnRefreshDrives.Click += new System.EventHandler(this.btnRefreshDrives_Click);
             // 
-            // txtSourceDir
-            // 
-            this.txtSourceDir.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-            this.txtSourceDir.Enabled = false;
-            this.txtSourceDir.Font = new System.Drawing.Font("Arial", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.txtSourceDir.Location = new System.Drawing.Point(71, 537);
-            this.txtSourceDir.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
-            this.txtSourceDir.Name = "txtSourceDir";
-            this.txtSourceDir.Size = new System.Drawing.Size(158, 20);
-            this.txtSourceDir.TabIndex = 5;
-            this.txtSourceDir.TabStop = false;
-            this.txtSourceDir.Text = " <Please select a folder>";
-            this.txtSourceDir.Enter += new System.EventHandler(this.txtSourceDir_Enter);
-            // 
-            // btnBrowse
-            // 
-            this.btnBrowse.Enabled = false;
-            this.btnBrowse.Font = new System.Drawing.Font("Arial", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.btnBrowse.Location = new System.Drawing.Point(260, 534);
-            this.btnBrowse.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
-            this.btnBrowse.Name = "btnBrowse";
-            this.btnBrowse.Size = new System.Drawing.Size(96, 25);
-            this.btnBrowse.TabIndex = 6;
-            this.btnBrowse.TabStop = false;
-            this.btnBrowse.Text = "Browse";
-            this.btnBrowse.UseVisualStyleBackColor = true;
-            // 
             // btnStartCopy
             // 
             this.btnStartCopy.Font = new System.Drawing.Font("Arial", 11.25F, ((System.Drawing.FontStyle)((System.Drawing.FontStyle.Bold | System.Drawing.FontStyle.Italic))), System.Drawing.GraphicsUnit.Point, ((byte)(0)));
@@ -171,7 +142,7 @@
             this.groupBox1.Controls.Add(this.btnSelectNone);
             this.groupBox1.Controls.Add(this.btnSelectAll);
             this.groupBox1.Font = new System.Drawing.Font("Arial", 9.75F, ((System.Drawing.FontStyle)((System.Drawing.FontStyle.Bold | System.Drawing.FontStyle.Italic))), System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.groupBox1.Location = new System.Drawing.Point(478, 57);
+            this.groupBox1.Location = new System.Drawing.Point(467, 57);
             this.groupBox1.Name = "groupBox1";
             this.groupBox1.Size = new System.Drawing.Size(516, 256);
             this.groupBox1.TabIndex = 10;
@@ -194,7 +165,7 @@
             this.groupBox2.Font = new System.Drawing.Font("Arial", 9.75F, ((System.Drawing.FontStyle)((System.Drawing.FontStyle.Bold | System.Drawing.FontStyle.Italic))), System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.groupBox2.Location = new System.Drawing.Point(11, 57);
             this.groupBox2.Name = "groupBox2";
-            this.groupBox2.Size = new System.Drawing.Size(461, 334);
+            this.groupBox2.Size = new System.Drawing.Size(450, 334);
             this.groupBox2.TabIndex = 27;
             this.groupBox2.TabStop = false;
             this.groupBox2.Text = "Step 1: Select the source folder to copy to USB drive(s)";
@@ -207,10 +178,12 @@
             this.dirsTreeView.HideSelection = false;
             this.dirsTreeView.ImageIndex = 0;
             this.dirsTreeView.ImageList = this.imageList1;
+            this.dirsTreeView.Indent = 16;
+            this.dirsTreeView.ItemHeight = 18;
             this.dirsTreeView.Location = new System.Drawing.Point(12, 21);
             this.dirsTreeView.Name = "dirsTreeView";
             this.dirsTreeView.SelectedImageIndex = 0;
-            this.dirsTreeView.Size = new System.Drawing.Size(437, 305);
+            this.dirsTreeView.Size = new System.Drawing.Size(426, 305);
             this.dirsTreeView.StateImageList = this.imageList1;
             this.dirsTreeView.TabIndex = 1;
             this.dirsTreeView.TabStop = false;
@@ -240,7 +213,7 @@
             this.groupBox3.Controls.Add(this.PictureBox1);
             this.groupBox3.Controls.Add(this.btnStartCopy);
             this.groupBox3.Font = new System.Drawing.Font("Arial", 9.75F, ((System.Drawing.FontStyle)((System.Drawing.FontStyle.Bold | System.Drawing.FontStyle.Italic))), System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.groupBox3.Location = new System.Drawing.Point(478, 326);
+            this.groupBox3.Location = new System.Drawing.Point(467, 326);
             this.groupBox3.Name = "groupBox3";
             this.groupBox3.Size = new System.Drawing.Size(516, 65);
             this.groupBox3.TabIndex = 28;
@@ -287,10 +260,8 @@
             this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(224)))), ((int)(((byte)(224)))), ((int)(((byte)(224)))));
-            this.ClientSize = new System.Drawing.Size(1005, 401);
-            this.Controls.Add(this.txtSourceDir);
+            this.ClientSize = new System.Drawing.Size(993, 402);
             this.Controls.Add(this.groupBox3);
-            this.Controls.Add(this.btnBrowse);
             this.Controls.Add(this.groupBox2);
             this.Controls.Add(this.Label1);
             this.Controls.Add(this.groupBox1);
@@ -318,8 +289,6 @@
         private System.Windows.Forms.Button btnSelectAll;
         private System.Windows.Forms.Button btnSelectNone;
         private System.Windows.Forms.Button btnRefreshDrives;
-        private System.Windows.Forms.TextBox txtSourceDir;
-        private System.Windows.Forms.Button btnBrowse;
         private System.Windows.Forms.Button btnStartCopy;
         private System.Windows.Forms.Label lblSelectedDrives;
         private System.Windows.Forms.CheckedListBox lstDrives;
