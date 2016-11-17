@@ -47,7 +47,7 @@ namespace WindowsFormsApplication1
         public Main()
         {
             InitializeComponent();
-            PopulateTreeView();  // Add drives to TreeView
+            PopulateTreeView(dirsTreeView);  // Add drives to TreeView
 
             // Keep selected node highlighted if TreeView control loses focus            
             this.dirsTreeView.BeforeExpand += new TreeViewCancelEventHandler(this.dirsTreeView_BeforeExpand);            
@@ -206,12 +206,29 @@ namespace WindowsFormsApplication1
             argExceptionError   = false;
             TreeNode aNode      = dirsTreeView.SelectedNode;
 
-            // Check to make sure user has selected a source folder, if not, exit method
+            // Check to make sure user has selected a source folder, and set sourceDir variable.  if not, exit method
             if (aNode != null)
                 sourceDir = (string)aNode.Tag;
             else
+            {                
+                MessageBox.Show("Please select a valid source folder.", "USB Batch Copy", MessageBoxButtons.OK);
+                return;
+            }
+
+            // Check if source drive is ready, exists.  If any of these are true, exit method
+            DriveInfo dInfo = new DriveInfo(sourceDir.Substring(0, 2));
+            if (dInfo.IsReady == false || Directory.Exists(dInfo.Name) == false)
             {
-                MessageBox.Show("Please select a valid source directory.", "USB Batch Copy", MessageBoxButtons.OK);
+                MessageBox.Show("Source folder does not exist, or source drive is not ready.  Please try again.", "USB Batch Copy", MessageBoxButtons.OK);
+                dirsTreeView.Nodes.Clear();
+                PopulateTreeView(dirsTreeView);
+                return;
+            }
+
+            // Check if source folder is empty.  Exit if true
+            if (IsDirectoryEmpty(sourceDir) == true)
+            {
+                MessageBox.Show("Source folder is empty; cannot copy an empty folder.  Please try again.", "USB Batch Copy", MessageBoxButtons.OK);
                 return;
             }
 
@@ -224,6 +241,16 @@ namespace WindowsFormsApplication1
 
             // Add checked items in CheckedListBox to list object
             PopulateListOfDrives(lstDrives, listDrivesToCopy);
+
+            // Check to make sure source drive and destination drive are not the same, exit if true
+            foreach (var item in listDrivesToCopy)
+            {
+                if (sourceDir.Substring(0, 1) == item.Substring(0, 1))
+                {
+                    MessageBox.Show("Source drive and destination drive cannot be the same.  Please try again.", "USB Batch Copy", MessageBoxButtons.OK);
+                    return;
+                }
+            }            
 
             // Check to make sure user did not remove drive after refresh, but before copy
             foreach (var item in listDrivesToCopy)
@@ -336,8 +363,12 @@ namespace WindowsFormsApplication1
             lblStatus.ForeColor = Color.Green;
             SetCheckState(lstDrives, false);
         }
-        
-        private void PopulateTreeView()
+
+        /// <summary>
+        /// Populates a TreeView control with all logical drives.
+        /// </summary>
+        /// <param name="treeView">Specifies the TreeView control to populate.</param>
+        private void PopulateTreeView(TreeView treeViewName)
         {
             // Get a list of the drives
             string[] drives = Environment.GetLogicalDrives();
@@ -395,7 +426,7 @@ namespace WindowsFormsApplication1
                 if (di.IsReady == true)
                     node.Nodes.Add("...");
 
-                dirsTreeView.Nodes.Add(node);
+                treeViewName.Nodes.Add(node);
             }         
         }
 
@@ -453,6 +484,11 @@ namespace WindowsFormsApplication1
             return Convert.ToString(mo["ProviderName"]);
         }
 
+        public bool IsDirectoryEmpty(string path)
+        {
+            return !Directory.EnumerateFileSystemEntries(path).Any();
+        }
+
         /*public string GetDriveLabels(string driveNameAsLetterColonBackslash)
         {
             IntPtr pidl;
@@ -465,6 +501,6 @@ namespace WindowsFormsApplication1
                 return name;
             }
             return null;
-        }*/       
+        }*/
     }
 }
