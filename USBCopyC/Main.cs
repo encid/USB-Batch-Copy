@@ -21,7 +21,6 @@ namespace WindowsFormsApplication1
         Dictionary<string, string> dictRemovableDrives = new Dictionary<string, string>();
         FolderBrowserDialog fbd = new FolderBrowserDialog();
         List<string> listDrivesToCopy = new List<string>();
-        bool argExceptionError = false;
         string sourceDir;
         int currDriveCount;
 
@@ -213,7 +212,6 @@ namespace WindowsFormsApplication1
         {
             // Set UI properties and other vars
             PictureBox1.Visible = false;
-            argExceptionError = false;
             TreeNode aNode = dirsTreeView.SelectedNode;
 
             // Check to make sure user has selected a source folder, and set sourceDir variable.  if not, exit method
@@ -320,54 +318,51 @@ namespace WindowsFormsApplication1
             }
             catch (ArgumentException)  // Catch user removal of drive during copy and set bool flag for RunWorkerCompleted to process
             {
-                argExceptionError = true;
             }
             catch (OperationCanceledException)  // Catch user cancelling copy and set bool flag for RunWorkerCompleted to process
             {
                 e.Cancel = true;
             }
+            catch { }
         }
 
         private void backgroundWorker1_RunWorkerCompleted(object sender, System.ComponentModel.RunWorkerCompletedEventArgs e)
-        {
+        {                        
+            if (e.Cancelled)
+            {   
+                // The user cancelled the operation.                
+                lblStatus.ForeColor = Color.Black;
+                lblStatus.Text = "Ready";
+                MessageBox.Show("Copying operation has been cancelled.", "USB Batch Copy", MessageBoxButtons.OK);
+            }            
+            else if (e.Error != null)
+            {
+                // There was an error during the operation.
+                lblStatus.ForeColor = Color.Black;
+                lblStatus.Text = "Ready";
+                RefreshDrives(lstDrives, dictRemovableDrives);
+                MessageBox.Show("An error has occured: " + e.Error.Message, "USB Batch Copy", MessageBoxButtons.OK);
+            }
+            else
+            {
+                // The operation completed normally.
+                PictureBox1.Visible = true;
+                lblStatus.ForeColor = Color.Green;
+                if (lstDrives.CheckedItems.Count == 1)
+                    lblStatus.Text = "Success! Copied to 1 drive.";
+                else
+                    lblStatus.Text = string.Format("Success! Copied to {0} drives.", listDrivesToCopy.Count());                
+            }
+
             // Enable UI controls            
             if (ConfigurationManager.AppSettings["autoRefresh"] == "0") { btnRefreshDrives.Enabled = true; }
-            btnStartCopy. Enabled  = true;
-            btnSelectAll .Enabled  = true;
-            btnSelectNone.Enabled  = true;
-            btnStartCopy .Enabled  = true;
-            lstDrives    .Enabled  = true;
-            dirsTreeView. Enabled  = true;
+            btnStartCopy.Enabled = true;
+            btnSelectAll.Enabled = true;
+            btnSelectNone.Enabled = true;
+            btnStartCopy.Enabled = true;
+            lstDrives.Enabled = true;
+            dirsTreeView.Enabled = true;
 
-            // Checks for cancelled flag from BackgroundWorker1_DoWork and raises events / sets UI control properties appropriately
-            if (e.Cancelled)
-            {
-                MessageBox.Show(this, "Copying operation has been cancelled.", "USB Batch Copy");
-                lblStatus.ForeColor = Color.Black;
-                lblStatus.Text      = "Ready";
-                return;
-            }
-
-            // Checks for argExceptionError flag from BackgroundWorker1_DoWork and raises events / sets UI control properties appropriately
-            if (argExceptionError)
-            {
-                MessageBox.Show("An error has occured.  Please try again.");
-                lblStatus.ForeColor = Color.Black;
-                lblStatus.Text      = "Ready";
-                RefreshDrives(lstDrives, dictRemovableDrives);
-                return;
-            }
-
-            // Copy completed successfully with no flagged bools, so continue
-            PictureBox1.Visible = true;
-
-            // Check how many drives were copied and set status accordingly
-            if (lstDrives.CheckedItems.Count == 1)
-                lblStatus.Text = "Success! Copied to 1 drive.";
-            else
-                lblStatus.Text = string.Format("Success! Copied to {0} drives.", listDrivesToCopy.Count());
-
-            lblStatus.ForeColor = Color.Green;
             SetCheckState(lstDrives, false);
         }
 
