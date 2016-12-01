@@ -17,11 +17,11 @@ namespace WindowsFormsApplication1
 {
     public partial class Main : Form
     {
-      //const string SHELL                             = "shell32.dll";
+      //const string SHELL = "shell32.dll";
         Dictionary<string, string> dictRemovableDrives = new Dictionary<string, string>();
-        FolderBrowserDialog fbd                        = new FolderBrowserDialog();
-        List<string> listDrivesToCopy                  = new List<string>();
-        bool argExceptionError                         = false;
+        FolderBrowserDialog fbd = new FolderBrowserDialog();
+        List<string> listDrivesToCopy = new List<string>();
+        bool argExceptionError = false;
         string sourceDir;
         int currDriveCount;
 
@@ -128,6 +128,22 @@ namespace WindowsFormsApplication1
         }
 
         /// <summary>
+        /// Retrieves a collection of removable drives that are ready.
+        /// </summary>
+        /// <returns></returns>
+        private IEnumerable<DriveInfo> GetRemovableDrives()
+        {
+            // Get collection of connected drives and query for removable and ready drives
+            IEnumerable<DriveInfo> retVal =
+                from d in DriveInfo.GetDrives()
+                where d.DriveType == DriveType.Removable &&
+                      d.IsReady
+                select d;
+
+            return retVal;
+        }
+
+        /// <summary>
         /// Detects removable drives, adds them to dictionary (dict), then binds dictionary to listbox (clb).
         /// </summary>
         /// <param name="clb">CheckedListBox object to display removable drives.</param>
@@ -138,12 +154,7 @@ namespace WindowsFormsApplication1
             dict.Clear();
             clb.DataSource = null;
 
-            // Get collection of connected drives and query for removable and ready drives
-            IEnumerable<DriveInfo> drives =
-                from d in DriveInfo.GetDrives()
-                where d.DriveType == DriveType.Removable &&
-                      d.IsReady   == true
-                select d;
+            IEnumerable<DriveInfo> drives = GetRemovableDrives();
 
             // If no removable drives detected, exit method
             if (!drives.Any()) return;
@@ -198,26 +209,25 @@ namespace WindowsFormsApplication1
             RefreshDrives(lstDrives, dictRemovableDrives);
         }
 
-        private void btnStartCopy_Click(object sender, EventArgs e)
-        // Does some error checking on user input, and kicks off the BackgroundWorker
+        private void StartCopy()
         {
             // Set UI properties and other vars
             PictureBox1.Visible = false;
-            argExceptionError   = false;
-            TreeNode aNode      = dirsTreeView.SelectedNode;
+            argExceptionError = false;
+            TreeNode aNode = dirsTreeView.SelectedNode;
 
             // Check to make sure user has selected a source folder, and set sourceDir variable.  if not, exit method
             if (aNode != null)
                 sourceDir = (string)aNode.Tag;
             else
-            {                
+            {
                 MessageBox.Show("Please select a valid source folder.", "USB Batch Copy", MessageBoxButtons.OK);
                 return;
             }
 
             // Check if source drive is ready, exists.  If any of these are true, exit method
             DriveInfo dInfo = new DriveInfo(sourceDir.Substring(0, 2));
-            if (dInfo.IsReady == false || Directory.Exists(dInfo.Name) == false)
+            if (!dInfo.IsReady || !Directory.Exists(dInfo.Name))
             {
                 MessageBox.Show("Source folder does not exist, or source drive is not ready.  Please try again.", "USB Batch Copy", MessageBoxButtons.OK);
                 dirsTreeView.Nodes.Clear();
@@ -226,14 +236,14 @@ namespace WindowsFormsApplication1
             }
 
             // Check if source folder is empty.  Exit if true
-            if (IsDirectoryEmpty(sourceDir) == true)
+            if (IsDirectoryEmpty(sourceDir))
             {
                 MessageBox.Show("Source folder is empty; cannot copy an empty folder.  Please try again.", "USB Batch Copy", MessageBoxButtons.OK);
                 return;
             }
 
             // If no drives are checked in CheckedListBox, exit method 
-            if (lstDrives.CheckedItems.Count == 0)
+            if (lstDrives.CheckedItems.Count > 5)
             {
                 MessageBox.Show("Please select at least one destination drive.", "USB Batch Copy", MessageBoxButtons.OK);
                 return;
@@ -243,19 +253,15 @@ namespace WindowsFormsApplication1
             PopulateListOfDrives(lstDrives, listDrivesToCopy);
 
             // Check to make sure source drive and destination drive are not the same, exit if true
-            foreach (var item in listDrivesToCopy)
+            // Check to make sure user did not remove drive after refresh, but before copy
+            foreach (var destDir in listDrivesToCopy)
             {
-                if (sourceDir.Substring(0, 1) == item.Substring(0, 1))
+                if (sourceDir.Substring(0, 1) == destDir.Substring(0, 1))
                 {
                     MessageBox.Show("Source drive and destination drive cannot be the same.  Please try again.", "USB Batch Copy", MessageBoxButtons.OK);
                     return;
                 }
-            }            
-
-            // Check to make sure user did not remove drive after refresh, but before copy
-            foreach (var item in listDrivesToCopy)
-            {
-                if (!Directory.Exists(item))
+                if (!Directory.Exists(destDir))
                 {
                     MessageBox.Show("Target destination drive does not exist.  Please try again.");
                     RefreshDrives(lstDrives, dictRemovableDrives);
@@ -265,16 +271,21 @@ namespace WindowsFormsApplication1
 
             // Disable UI controls and set some variables    
             if (ConfigurationManager.AppSettings["autoRefresh"] == "0") { btnRefreshDrives.Enabled = false; }
-            btnSelectAll .Enabled   = false;
-            btnSelectNone.Enabled   = false;
-            btnStartCopy .Enabled   = false;
-            lstDrives    .Enabled   = false;
-            dirsTreeView. Enabled   = false;
-            lblStatus    .Text      = "Copying...";
-            lblStatus    .ForeColor = Color.Black;
+            btnSelectAll.Enabled = false;
+            btnSelectNone.Enabled = false;
+            btnStartCopy.Enabled = false;
+            lstDrives.Enabled = false;
+            dirsTreeView.Enabled = false;
+            lblStatus.Text = "Copying...";
+            lblStatus.ForeColor = Color.Black;
 
             // Begin the copy in BackgroundWorker
             backgroundWorker1.RunWorkerAsync();
+        }
+
+        private void btnStartCopy_Click(object sender, EventArgs e)
+        {
+            StartCopy();
         }
                 
         private void tmrRefresh_Tick(object sender, EventArgs e)
@@ -284,11 +295,7 @@ namespace WindowsFormsApplication1
             // AUTOMATIC REFRESH of drive list -- Edit config file to enable/disable
             if (ConfigurationManager.AppSettings["autoRefresh"] == "1")
             {
-                IEnumerable<DriveInfo> drives =
-                from d in DriveInfo.GetDrives()
-                where d.DriveType == DriveType.Removable &&
-                        d.IsReady == true
-                select d;
+                IEnumerable<DriveInfo> drives = GetRemovableDrives();
 
                 if (drives.Count() != currDriveCount)
                     RefreshDrives(lstDrives, dictRemovableDrives);
@@ -307,8 +314,8 @@ namespace WindowsFormsApplication1
                 for (int i = 0; i < listDrivesToCopy.Count(); i++)
                 {
                     ExecuteSecure(() => lblStatus.Text = string.Format("Copying drive {0} of {1}..", (i + 1), totalItems));  // Update status label securely
-                    string item = listDrivesToCopy[i];
-                    FileSystem.CopyDirectory(sourceDir, item, UIOption.AllDialogs, UICancelOption.ThrowException);
+                    string destDir = listDrivesToCopy[i];
+                    FileSystem.CopyDirectory(sourceDir, destDir, UIOption.AllDialogs, UICancelOption.ThrowException);
                 }
             }
             catch (ArgumentException)  // Catch user removal of drive during copy and set bool flag for RunWorkerCompleted to process
@@ -423,7 +430,7 @@ namespace WindowsFormsApplication1
                 
                 node.Tag = drive;
 
-                if (di.IsReady == true)
+                if (di.IsReady)
                     node.Nodes.Add("...");
 
                 treeViewName.Nodes.Add(node);
