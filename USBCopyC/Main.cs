@@ -31,28 +31,18 @@ namespace WindowsFormsApplication1
         //[DllImport(SHELL, CharSet = CharSet.Unicode)]
         //private static extern uint SHGetNameFromIDList(IntPtr pidl, SIGDN sigdnName, [Out] out String ppszName);
 
-        /*public enum SIGDN : uint
-          {
-              NORMALDISPLAY = 0x00000000,
-              PARENTRELATIVEPARSING = 0x80018001,
-              DESKTOPABSOLUTEPARSING = 0x80028000,
-              PARENTRELATIVEEDITING = 0x80031001,
-              DESKTOPABSOLUTEEDITING = 0x8004c000,
-              FILESYSPATH = 0x80058000,
-              URL = 0x80068000,
-              PARENTRELATIVEFORADDRESSBAR = 0x8007c001,
-              PARENTRELATIVE = 0x80080001
-          }*/
-        public enum CopyResult
+      /*public enum SIGDN : uint
         {
-            InvalidSourceFolder = 0,
-            SourceDriveNotReady = 1,
-            SourceFolderEmpty = 2,
-            DestDriveNotSelected = 3,
-            SourceAndDestDrivesSame = 4,
-            DestDriveNotExist = 5,
-            CopySuccessful = 6
-        }
+            NORMALDISPLAY = 0x00000000,
+            PARENTRELATIVEPARSING = 0x80018001,
+            DESKTOPABSOLUTEPARSING = 0x80028000,
+            PARENTRELATIVEEDITING = 0x80031001,
+            DESKTOPABSOLUTEEDITING = 0x8004c000,
+            FILESYSPATH = 0x80058000,
+            URL = 0x80068000,
+            PARENTRELATIVEFORADDRESSBAR = 0x8007c001,
+            PARENTRELATIVE = 0x80080001
+        }*/
 
         public Main()
         {
@@ -208,47 +198,45 @@ namespace WindowsFormsApplication1
             RefreshDrives(lstDrives, dictRemovableDrives);
         }
 
-        private CopyResult StartDriveCopy()
+        private void btnStartCopy_Click(object sender, EventArgs e)
+        // Does some error checking on user input, and kicks off the BackgroundWorker
         {
             // Set UI properties and other vars
             PictureBox1.Visible = false;
-            argExceptionError = false;
-            TreeNode aNode = dirsTreeView.SelectedNode;
+            argExceptionError   = false;
+            TreeNode aNode      = dirsTreeView.SelectedNode;
 
-            // Check to make sure user has selected a source folder, and set sourceDir variable.
+            // Check to make sure user has selected a source folder, and set sourceDir variable.  if not, exit method
             if (aNode != null)
                 sourceDir = (string)aNode.Tag;
-            
-            // Check if source drive is ready, exists.  If any of these are true, exit method
-            DriveInfo dInfo = new DriveInfo(sourceDir.Substring(0, 2));
-            if (Directory.Exists(dInfo.Name) == false || aNode == null)
-            {
-                MessageBox.Show("Source folder is invalid or does not exist.  Please try again.", "USB Batch Copy", MessageBoxButtons.OK);
-                dirsTreeView.Nodes.Clear();
-                PopulateTreeView(dirsTreeView);
-                return CopyResult.InvalidSourceFolder;
+            else
+            {                
+                MessageBox.Show("Please select a valid source folder.", "USB Batch Copy", MessageBoxButtons.OK);
+                return;
             }
 
-            if (dInfo.IsReady == false)
+            // Check if source drive is ready, exists.  If any of these are true, exit method
+            DriveInfo dInfo = new DriveInfo(sourceDir.Substring(0, 2));
+            if (dInfo.IsReady == false || Directory.Exists(dInfo.Name) == false)
             {
-                MessageBox.Show("Source drive is not ready.  Please try again.", "USB Batch Copy", MessageBoxButtons.OK);
+                MessageBox.Show("Source folder does not exist, or source drive is not ready.  Please try again.", "USB Batch Copy", MessageBoxButtons.OK);
                 dirsTreeView.Nodes.Clear();
                 PopulateTreeView(dirsTreeView);
-                return CopyResult.InvalidSourceFolder;
+                return;
             }
 
             // Check if source folder is empty.  Exit if true
             if (IsDirectoryEmpty(sourceDir) == true)
             {
                 MessageBox.Show("Source folder is empty; cannot copy an empty folder.  Please try again.", "USB Batch Copy", MessageBoxButtons.OK);
-                return CopyResult.SourceFolderEmpty;
+                return;
             }
 
             // If no drives are checked in CheckedListBox, exit method 
             if (lstDrives.CheckedItems.Count == 0)
             {
                 MessageBox.Show("Please select at least one destination drive.", "USB Batch Copy", MessageBoxButtons.OK);
-                return CopyResult.DestDriveNotSelected;
+                return;
             }
 
             // Add checked items in CheckedListBox to list object
@@ -260,9 +248,9 @@ namespace WindowsFormsApplication1
                 if (sourceDir.Substring(0, 1) == item.Substring(0, 1))
                 {
                     MessageBox.Show("Source drive and destination drive cannot be the same.  Please try again.", "USB Batch Copy", MessageBoxButtons.OK);
-                    return CopyResult.SourceAndDestDrivesSame;
+                    return;
                 }
-            }
+            }            
 
             // Check to make sure user did not remove drive after refresh, but before copy
             foreach (var item in listDrivesToCopy)
@@ -271,30 +259,22 @@ namespace WindowsFormsApplication1
                 {
                     MessageBox.Show("Target destination drive does not exist.  Please try again.");
                     RefreshDrives(lstDrives, dictRemovableDrives);
-                    return CopyResult.DestDriveNotExist;
+                    return;
                 }
             }
 
             // Disable UI controls and set some variables    
             if (ConfigurationManager.AppSettings["autoRefresh"] == "0") { btnRefreshDrives.Enabled = false; }
-            btnSelectAll.Enabled = false;
-            btnSelectNone.Enabled = false;
-            btnStartCopy.Enabled = false;
-            lstDrives.Enabled = false;
-            dirsTreeView.Enabled = false;
-            lblStatus.Text = "Copying...";
-            lblStatus.ForeColor = Color.Black;
+            btnSelectAll .Enabled   = false;
+            btnSelectNone.Enabled   = false;
+            btnStartCopy .Enabled   = false;
+            lstDrives    .Enabled   = false;
+            dirsTreeView. Enabled   = false;
+            lblStatus    .Text      = "Copying...";
+            lblStatus    .ForeColor = Color.Black;
 
             // Begin the copy in BackgroundWorker
             backgroundWorker1.RunWorkerAsync();
-            return CopyResult.CopySuccessful;
-        }
-
-        private void btnStartCopy_Click(object sender, EventArgs e)
-        // Does some error checking on user input, and kicks off the BackgroundWorker
-        {
-            StartDriveCopy();
-            return;
         }
                 
         private void tmrRefresh_Tick(object sender, EventArgs e)
