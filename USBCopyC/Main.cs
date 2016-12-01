@@ -17,14 +17,15 @@ namespace WindowsFormsApplication1
 {
     public partial class Main : Form
     {
-        //const string SHELL = "shell32.dll";
+      //const string SHELL                             = "shell32.dll";
         Dictionary<string, string> dictRemovableDrives = new Dictionary<string, string>();
-        List<string> listDrivesToCopy = new List<string>();
-        bool argExceptionError = false;
+        FolderBrowserDialog fbd                        = new FolderBrowserDialog();
+        List<string> listDrivesToCopy                  = new List<string>();
+        bool argExceptionError                         = false;
         string sourceDir;
         int currDriveCount;
 
-        //[DllImport(SHELL, CharSet = CharSet.Unicode)]    = new FolderBrowserDialog();
+        //[DllImport(SHELL, CharSet = CharSet.Unicode)]
         //private static extern uint SHParseDisplayName(string pszName, IntPtr zero, [Out] out IntPtr ppidl, uint sfgaoIn, [Out] out uint psfgaoOut);
 
         //[DllImport(SHELL, CharSet = CharSet.Unicode)]
