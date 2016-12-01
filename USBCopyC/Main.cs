@@ -228,7 +228,6 @@ namespace WindowsFormsApplication1
             if (!dInfo.IsReady || !Directory.Exists(dInfo.Name))
             {
                 MessageBox.Show("Source folder does not exist, or source drive is not ready.  Please try again.", "USB Batch Copy", MessageBoxButtons.OK);
-                dirsTreeView.Nodes.Clear();
                 PopulateTreeView(dirsTreeView);
                 return;
             }
@@ -241,7 +240,7 @@ namespace WindowsFormsApplication1
             }
 
             // If no drives are checked in CheckedListBox, exit method 
-            if (lstDrives.CheckedItems.Count > 5)
+            if (lstDrives.CheckedItems.Count == 0)
             {
                 MessageBox.Show("Please select at least one destination drive.", "USB Batch Copy", MessageBoxButtons.OK);
                 return;
@@ -372,6 +371,9 @@ namespace WindowsFormsApplication1
         /// <param name="treeView">Specifies the TreeView control to populate.</param>
         private void PopulateTreeView(TreeView treeViewName)
         {
+            // Clear the TreeView of nodes
+            treeViewName.Nodes.Clear();
+
             // Get a list of the drives
             string[] drives = Environment.GetLogicalDrives();
             
