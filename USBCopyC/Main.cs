@@ -92,7 +92,9 @@ namespace WindowsFormsApplication1
         private void ExecuteSecure(Action a)
         // Usage example: ExecuteSecure(() => this.someLabel.Text = "foo");
         {
-            BeginInvoke((Action)delegate { a(); });
+            BeginInvoke((Action)delegate {
+                a();
+            });
         }
 
         /// <summary>
