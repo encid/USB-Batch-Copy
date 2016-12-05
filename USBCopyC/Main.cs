@@ -46,6 +46,7 @@ namespace WindowsFormsApplication1
         public Main()
         {
             InitializeComponent();
+            PopulateListView(lv);
             PopulateTreeView(dirsTreeView);  // Add drives to TreeView
 
             // Keep selected node highlighted if TreeView control loses focus            
@@ -68,6 +69,13 @@ namespace WindowsFormsApplication1
                     if (node != null && node.Bounds.Contains(e.X, e.Y))
                         dirsTreeView.SelectedNode = node;
                 };
+
+            // Add columns to ListView
+            lv.Columns.Add("Drive", -2, HorizontalAlignment.Left);
+            lv.Columns.Add("Volume name", -2, HorizontalAlignment.Left);
+            lv.Columns.Add("File system", -2, HorizontalAlignment.Left);
+            lv.Columns.Add("Free space", -2, HorizontalAlignment.Left);
+            lv.Columns.Add("Capacity", -2, HorizontalAlignment.Left);
         }
 
         /// <summary>
@@ -113,6 +121,19 @@ namespace WindowsFormsApplication1
                 list.SetItemChecked(i, choice);
         }
 
+        /// <summary>
+        /// Set CheckState for all items in a ListView.
+        /// </summary>
+        /// <param name="list">ListView to set CheckState on.</param>
+        /// <param name="choice">Set CheckState; Checked = True and Unchecked = False.</param>
+        private void SetListViewCheckState(ListView list, bool choice)
+        // Check or uncheck all items in CheckedListBox, choice = false for uncheck, choice = true for check
+        {
+            foreach (ListViewItem item in list.Items)
+                item.Checked = choice;
+        }
+
+
         private void Form1_Load(object sender, EventArgs e)
         {
             if (ConfigurationManager.AppSettings["autoRefresh"] == "1")
@@ -121,9 +142,6 @@ namespace WindowsFormsApplication1
                 btnRefreshDrives.Text    = "Auto-Detect On";
                 btnRefreshDrives.Enabled = false;
             }
-
-            // Populate listbox with removable drives
-            RefreshDrives(lstDrives, dictRemovableDrives);
         }
 
         /// <summary>
@@ -164,8 +182,8 @@ namespace WindowsFormsApplication1
                 var freeSpace  = FormatBytes(drive.TotalFreeSpace);
                 var totalSpace = FormatBytes(drive.TotalSize);
                 var drvInfo    = String.Format("{0} - ( Label: {1}, FileSystem: {2}, Size: {3}, Free: {4} )",
-                                 drive.Name, drive.VolumeLabel, drive.DriveFormat,
-                                 totalSpace, freeSpace);
+                                    drive.Name, drive.VolumeLabel, drive.DriveFormat,
+                                    totalSpace, freeSpace);
                 dict.Add(drive.Name, drvInfo);
             }
 
@@ -176,11 +194,65 @@ namespace WindowsFormsApplication1
         }
 
         /// <summary>
+        /// Detects removable drives and adds them to ListView.
+        /// </summary>
+        /// <param name="lview">ListView to populate.</param>
+        private void PopulateListView(ListView lview)
+        {
+            lview.Items.Clear();            
+
+            IEnumerable<DriveInfo> drives = GetRemovableDrives();
+
+            // If no removable drives detected, exit method
+            if (!drives.Any()) return;
+
+            // Iterate through collection, add drive name and drive information to dictionary
+            foreach (var drive in drives)
+            {
+                var freeSpace = FormatBytes(drive.TotalFreeSpace);
+                var totalSpace = FormatBytes(drive.TotalSize);
+
+                ListViewItem oItem = new ListViewItem();
+                
+                oItem.Text = drive.Name;
+                oItem.SubItems.Add(drive.VolumeLabel);
+                oItem.SubItems.Add(drive.DriveFormat);
+                oItem.SubItems.Add(freeSpace);
+                oItem.SubItems.Add(totalSpace);
+
+                lview.Items.Add(oItem);                
+            }
+
+            // Set column width
+            for (int i = 0; i < lview.Columns.Count;  i++)
+            {
+                lview.Columns[i].Width = -2;
+            }
+        }
+
+        /// <summary>
+        /// Add checked items in ListView to list collection.
+        /// </summary>
+        /// <param name="lview">ListView to parse.</param>
+        /// <param name="list">List collection to add items to.</param>
+        private void AddDrivesToCopyList(ListView lview, List<string> list)
+        {
+            // Clear list collection.
+            list.Clear();
+
+            // Iterate through checked items in ListView and add them to list collection
+            foreach (ListViewItem item in lview.CheckedItems)
+            {
+                list.Add(item.Text);
+            }
+        }
+
+        /// <summary>
         /// Add checked items in CheckedListBox to list collection.
         /// </summary>
         /// <param name="clb">CheckedListBox to parse.</param>
         /// <param name="list">List collection to add items to.</param>
-        private void PopulateListOfDrives(CheckedListBox clb, List<string> list)
+        private void old_AddDrivesToCopyList(CheckedListBox clb, List<string> list)
         {
             // Clear list collection.
             list.Clear();
@@ -193,13 +265,13 @@ namespace WindowsFormsApplication1
         private void btnSelectAll_Click(object sender, EventArgs e)
         // Sets check state for all listed drives to true.
         {
-            SetCheckState(lstDrives, true);
+            SetListViewCheckState(lv, true);
         }
 
         private void btnSelectNone_Click(object sender, EventArgs e)
         // Sets check state for all listed drives to false.
         {
-            SetCheckState(lstDrives, false);
+            SetListViewCheckState(lv, false);
         }
 
         private void btnRefreshDrives_Click(object sender, EventArgs e)
@@ -223,7 +295,7 @@ namespace WindowsFormsApplication1
                 return;
             }
 
-            // Check if source drive is ready, exists.  If any of these are true, exit method
+            // Check if source drive is ready and exists.  If any of these are true, exit method
             DriveInfo dInfo = new DriveInfo(sourceDir.Substring(0, 2));
             if (!dInfo.IsReady || !Directory.Exists(dInfo.Name))
             {
@@ -240,14 +312,14 @@ namespace WindowsFormsApplication1
             }
 
             // If no drives are checked in CheckedListBox, exit method 
-            if (lstDrives.CheckedItems.Count == 0)
+            if (lv.CheckedItems.Count == 0)
             {
                 MessageBox.Show("Please select at least one destination drive.", "USB Batch Copy", MessageBoxButtons.OK);
                 return;
             }
 
             // Add checked items in CheckedListBox to list object
-            PopulateListOfDrives(lstDrives, listDrivesToCopy);
+            AddDrivesToCopyList(lv, listDrivesToCopy);
 
             // Check to make sure source drive and destination drive are not the same, exit if true
             // Check to make sure user did not remove drive after refresh, but before copy
@@ -261,18 +333,14 @@ namespace WindowsFormsApplication1
                 if (!Directory.Exists(destDir))
                 {
                     MessageBox.Show("Target destination drive does not exist.  Please try again.");
-                    RefreshDrives(lstDrives, dictRemovableDrives);
+                    PopulateListView(lv);
+                    //RefreshDrives(lstDrives, dictRemovableDrives);
                     return;
                 }
             }
 
             // Disable UI controls and set some variables    
-            if (ConfigurationManager.AppSettings["autoRefresh"] == "0") { btnRefreshDrives.Enabled = false; }
-            btnSelectAll.Enabled = false;
-            btnSelectNone.Enabled = false;
-            btnStartCopy.Enabled = false;
-            lstDrives.Enabled = false;
-            dirsTreeView.Enabled = false;
+            DisableUI();
             lblStatus.Text = "Copying...";
             lblStatus.ForeColor = Color.Black;
 
@@ -287,7 +355,7 @@ namespace WindowsFormsApplication1
                 
         private void tmrRefresh_Tick(object sender, EventArgs e)
         {
-            lblSelectedDrives.Text = string.Format("Drives Selected: {0}", lstDrives.CheckedItems.Count);
+            lblSelectedDrives.Text = string.Format("Drives Selected: {0}", lv.CheckedItems.Count);
 
             // AUTOMATIC REFRESH of drive list -- Edit config file to enable/disable
             if (ConfigurationManager.AppSettings["autoRefresh"] == "1")
@@ -354,15 +422,31 @@ namespace WindowsFormsApplication1
             }
 
             // Enable UI controls            
+            EnableUI();
+
+            SetCheckState(lstDrives, false);
+        }
+
+        private void EnableUI()
+        {
+            // Enable UI controls            
             if (ConfigurationManager.AppSettings["autoRefresh"] == "0") { btnRefreshDrives.Enabled = true; }
             btnStartCopy.Enabled = true;
             btnSelectAll.Enabled = true;
             btnSelectNone.Enabled = true;
-            btnStartCopy.Enabled = true;
             lstDrives.Enabled = true;
             dirsTreeView.Enabled = true;
+        }
 
-            SetCheckState(lstDrives, false);
+        private void DisableUI()
+        {
+            // Enable UI controls            
+            if (ConfigurationManager.AppSettings["autoRefresh"] == "0") { btnRefreshDrives.Enabled = false; }
+            btnStartCopy.Enabled = false;
+            btnSelectAll.Enabled = false;
+            btnSelectNone.Enabled = false;
+            lstDrives.Enabled = false;
+            dirsTreeView.Enabled = false;
         }
 
         /// <summary>
@@ -491,6 +575,22 @@ namespace WindowsFormsApplication1
         public bool IsDirectoryEmpty(string path)
         {
             return !Directory.EnumerateFileSystemEntries(path).Any();
+        }
+
+        private void button1_Click(object sender, EventArgs e)
+        {
+            PopulateListView(lv);
+        }
+
+        private void button2_Click(object sender, EventArgs e)
+        {
+            AddDrivesToCopyList(lv, listDrivesToCopy);
+        }
+
+        private void listView1_MouseClick(object sender, MouseEventArgs e)
+        {
+            ListViewItem lvi = lv.GetItemAt(e.X, e.Y);
+            if (e.X > 16) lvi.Checked = !lvi.Checked;
         }
 
         /*public string GetDriveLabels(string driveNameAsLetterColonBackslash)
