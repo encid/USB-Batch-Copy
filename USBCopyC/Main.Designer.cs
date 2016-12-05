@@ -36,9 +36,8 @@
             this.btnRefreshDrives = new System.Windows.Forms.Button();
             this.btnStartCopy = new System.Windows.Forms.Button();
             this.lblSelectedDrives = new System.Windows.Forms.Label();
-            this.lstDrives = new System.Windows.Forms.CheckedListBox();
             this.groupBox1 = new System.Windows.Forms.GroupBox();
-            this.lv = new System.Windows.Forms.ListView();
+            this.lvDrives = new System.Windows.Forms.ListView();
             this.Label1 = new System.Windows.Forms.Label();
             this.groupBox2 = new System.Windows.Forms.GroupBox();
             this.dirsTreeView = new System.Windows.Forms.TreeView();
@@ -123,24 +122,13 @@
             this.lblSelectedDrives.TabIndex = 7;
             this.lblSelectedDrives.Text = "Drives Selected: 0";
             // 
-            // lstDrives
-            // 
-            this.lstDrives.CheckOnClick = true;
-            this.lstDrives.Font = new System.Drawing.Font("Arial", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.lstDrives.FormattingEnabled = true;
-            this.lstDrives.Location = new System.Drawing.Point(23, 445);
-            this.lstDrives.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
-            this.lstDrives.Name = "lstDrives";
-            this.lstDrives.Size = new System.Drawing.Size(493, 191);
-            this.lstDrives.TabIndex = 2;
-            // 
             // groupBox1
             // 
             this.groupBox1.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(224)))), ((int)(((byte)(224)))), ((int)(((byte)(224)))));
             this.groupBox1.Controls.Add(this.btnRefreshDrives);
             this.groupBox1.Controls.Add(this.lblSelectedDrives);
             this.groupBox1.Controls.Add(this.btnSelectNone);
-            this.groupBox1.Controls.Add(this.lv);
+            this.groupBox1.Controls.Add(this.lvDrives);
             this.groupBox1.Controls.Add(this.btnSelectAll);
             this.groupBox1.Font = new System.Drawing.Font("Arial", 9.75F, ((System.Drawing.FontStyle)((System.Drawing.FontStyle.Bold | System.Drawing.FontStyle.Italic))), System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.groupBox1.Location = new System.Drawing.Point(467, 57);
@@ -150,21 +138,20 @@
             this.groupBox1.TabStop = false;
             this.groupBox1.Text = "Step 2: Select the USB drive(s) to be processed";
             // 
-            // lv
+            // lvDrives
             // 
-            this.lv.CheckBoxes = true;
-            this.lv.Font = new System.Drawing.Font("Arial", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.lv.FullRowSelect = true;
-            this.lv.HeaderStyle = System.Windows.Forms.ColumnHeaderStyle.Nonclickable;
-            this.lv.Location = new System.Drawing.Point(12, 21);
-            this.lv.MultiSelect = false;
-            this.lv.Name = "lv";
-            this.lv.ShowGroups = false;
-            this.lv.Size = new System.Drawing.Size(493, 192);
-            this.lv.TabIndex = 29;
-            this.lv.UseCompatibleStateImageBehavior = false;
-            this.lv.View = System.Windows.Forms.View.Details;
-            this.lv.MouseClick += new System.Windows.Forms.MouseEventHandler(this.listView1_MouseClick);
+            this.lvDrives.CheckBoxes = true;
+            this.lvDrives.Font = new System.Drawing.Font("Arial", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.lvDrives.FullRowSelect = true;
+            this.lvDrives.HeaderStyle = System.Windows.Forms.ColumnHeaderStyle.Nonclickable;
+            this.lvDrives.Location = new System.Drawing.Point(12, 21);
+            this.lvDrives.MultiSelect = false;
+            this.lvDrives.Name = "lvDrives";
+            this.lvDrives.ShowGroups = false;
+            this.lvDrives.Size = new System.Drawing.Size(493, 192);
+            this.lvDrives.TabIndex = 2;
+            this.lvDrives.UseCompatibleStateImageBehavior = false;
+            this.lvDrives.View = System.Windows.Forms.View.Details;
             // 
             // Label1
             // 
@@ -277,8 +264,7 @@
             this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(224)))), ((int)(((byte)(224)))), ((int)(((byte)(224)))));
-            this.ClientSize = new System.Drawing.Size(993, 575);
-            this.Controls.Add(this.lstDrives);
+            this.ClientSize = new System.Drawing.Size(993, 401);
             this.Controls.Add(this.groupBox3);
             this.Controls.Add(this.groupBox2);
             this.Controls.Add(this.Label1);
@@ -290,7 +276,7 @@
             this.MaximizeBox = false;
             this.Name = "Main";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
-            this.Text = "USB Batch Copy 1.06";
+            this.Text = "USB Batch Copy 1.07";
             this.Load += new System.EventHandler(this.Form1_Load);
             this.groupBox1.ResumeLayout(false);
             this.groupBox1.PerformLayout();
@@ -309,7 +295,6 @@
         private System.Windows.Forms.Button btnRefreshDrives;
         private System.Windows.Forms.Button btnStartCopy;
         private System.Windows.Forms.Label lblSelectedDrives;
-        private System.Windows.Forms.CheckedListBox lstDrives;
         private System.Windows.Forms.GroupBox groupBox1;
         internal System.Windows.Forms.Label Label1;
         private System.Windows.Forms.GroupBox groupBox2;
@@ -320,7 +305,7 @@
         private System.ComponentModel.BackgroundWorker backgroundWorker1;
         private System.Windows.Forms.TreeView dirsTreeView;
         private System.Windows.Forms.ImageList imageList1;
-        private System.Windows.Forms.ListView lv;
+        private System.Windows.Forms.ListView lvDrives;
     }
 }
 

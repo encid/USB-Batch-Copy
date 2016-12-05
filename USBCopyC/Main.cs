@@ -21,7 +21,6 @@ namespace WindowsFormsApplication1
         Dictionary<string, string> dictRemovableDrives = new Dictionary<string, string>();
         FolderBrowserDialog fbd = new FolderBrowserDialog();
         List<string> listDrivesToCopy = new List<string>();
-        string sourceDir;
         int currDriveCount;
 
         //[DllImport(SHELL, CharSet = CharSet.Unicode)]
@@ -30,27 +29,27 @@ namespace WindowsFormsApplication1
         //[DllImport(SHELL, CharSet = CharSet.Unicode)]
         //private static extern uint SHGetNameFromIDList(IntPtr pidl, SIGDN sigdnName, [Out] out String ppszName);
 
-      /*public enum SIGDN : uint
-        {
-            NORMALDISPLAY = 0x00000000,
-            PARENTRELATIVEPARSING = 0x80018001,
-            DESKTOPABSOLUTEPARSING = 0x80028000,
-            PARENTRELATIVEEDITING = 0x80031001,
-            DESKTOPABSOLUTEEDITING = 0x8004c000,
-            FILESYSPATH = 0x80058000,
-            URL = 0x80068000,
-            PARENTRELATIVEFORADDRESSBAR = 0x8007c001,
-            PARENTRELATIVE = 0x80080001
-        }*/
+        /*public enum SIGDN : uint
+          {
+              NORMALDISPLAY = 0x00000000,
+              PARENTRELATIVEPARSING = 0x80018001,
+              DESKTOPABSOLUTEPARSING = 0x80028000,
+              PARENTRELATIVEEDITING = 0x80031001,
+              DESKTOPABSOLUTEEDITING = 0x8004c000,
+              FILESYSPATH = 0x80058000,
+              URL = 0x80068000,
+              PARENTRELATIVEFORADDRESSBAR = 0x8007c001,
+              PARENTRELATIVE = 0x80080001
+          }*/
 
         public Main()
         {
             InitializeComponent();
-            PopulateListView(lv);
-            PopulateTreeView(dirsTreeView);  // Add drives to TreeView
+            PopulateListView(lvDrives);  // Add (destination) removable drives to ListView
+            PopulateTreeView(dirsTreeView);  // Add (source) drives to TreeView
 
             // Keep selected node highlighted if TreeView control loses focus            
-            this.dirsTreeView.BeforeExpand += new TreeViewCancelEventHandler(this.dirsTreeView_BeforeExpand);            
+            dirsTreeView.BeforeExpand += new TreeViewCancelEventHandler(this.dirsTreeView_BeforeExpand);
             dirsTreeView.DrawNode += (o, e) =>
                 {
                     if (!e.Node.TreeView.Focused && e.Node == e.Node.TreeView.SelectedNode)
@@ -70,12 +69,19 @@ namespace WindowsFormsApplication1
                         dirsTreeView.SelectedNode = node;
                 };
 
+            // Tick the checkbox if any part of the item line in ListView is clicked
+            lvDrives.MouseClick += (o, e) =>
+                {
+                    ListViewItem lvi = lvDrives.GetItemAt(e.X, e.Y);
+                    if (e.X > 16) lvi.Checked = !lvi.Checked;
+                };
+
             // Add columns to ListView
-            lv.Columns.Add("Drive", -2, HorizontalAlignment.Left);
-            lv.Columns.Add("Volume name", -2, HorizontalAlignment.Left);
-            lv.Columns.Add("File system", -2, HorizontalAlignment.Left);
-            lv.Columns.Add("Free space", -2, HorizontalAlignment.Left);
-            lv.Columns.Add("Capacity", -2, HorizontalAlignment.Left);
+            lvDrives.Columns.Add("Drive", -2, HorizontalAlignment.Left);
+            lvDrives.Columns.Add("Volume name", -2, HorizontalAlignment.Left);
+            lvDrives.Columns.Add("File system", -2, HorizontalAlignment.Left);
+            lvDrives.Columns.Add("Free space", -2, HorizontalAlignment.Left);
+            lvDrives.Columns.Add("Capacity", -2, HorizontalAlignment.Left);
         }
 
         /// <summary>
@@ -142,6 +148,9 @@ namespace WindowsFormsApplication1
                 btnRefreshDrives.Text    = "Auto-Detect On";
                 btnRefreshDrives.Enabled = false;
             }
+
+            //TreeNode treeNode = dirsTreeView.Nodes[0];
+            //dirsTreeView.SelectedNode = treeNode;
         }
 
         /// <summary>
@@ -265,78 +274,48 @@ namespace WindowsFormsApplication1
         private void btnSelectAll_Click(object sender, EventArgs e)
         // Sets check state for all listed drives to true.
         {
-            SetListViewCheckState(lv, true);
+            SetListViewCheckState(lvDrives, true);
         }
 
         private void btnSelectNone_Click(object sender, EventArgs e)
         // Sets check state for all listed drives to false.
         {
-            SetListViewCheckState(lv, false);
+            SetListViewCheckState(lvDrives, false);
         }
 
         private void btnRefreshDrives_Click(object sender, EventArgs e)
         // Detects removable drives and displays in CheckedListBox
         {
-            RefreshDrives(lstDrives, dictRemovableDrives);
+            PopulateListView(lvDrives);
         }
 
-        private void StartCopy()
+        private void ValidateCopyParams(string srcDir, List<string> destList)
         {
-            // Set UI properties and other vars
-            PictureBox1.Visible = false;
-            TreeNode aNode = dirsTreeView.SelectedNode;
+            // Check to make sure user has selected a source folder.
+            if (srcDir == "")
+                throw new Exception("SourceDirNotFound");
 
-            // Check to make sure user has selected a source folder, and set sourceDir variable.  if not, exit method
-            if (aNode != null)
-                sourceDir = (string)aNode.Tag;
-            else
-            {
-                MessageBox.Show("Please select a valid source folder.", "USB Batch Copy", MessageBoxButtons.OK);
-                return;
-            }
-
-            // Check if source drive is ready and exists.  If any of these are true, exit method
-            DriveInfo dInfo = new DriveInfo(sourceDir.Substring(0, 2));
+            // Check if source drive is ready and exists
+            DriveInfo dInfo = new DriveInfo(srcDir.Substring(0, 2));
             if (!dInfo.IsReady || !Directory.Exists(dInfo.Name))
-            {
-                MessageBox.Show("Source folder does not exist, or source drive is not ready.  Please try again.", "USB Batch Copy", MessageBoxButtons.OK);
-                PopulateTreeView(dirsTreeView);
-                return;
-            }
+                throw new Exception("DriveNotReady");
 
             // Check if source folder is empty.  Exit if true
-            if (IsDirectoryEmpty(sourceDir))
-            {
-                MessageBox.Show("Source folder is empty; cannot copy an empty folder.  Please try again.", "USB Batch Copy", MessageBoxButtons.OK);
-                return;
-            }
-
+            if (IsDirectoryEmpty(srcDir))
+                throw new Exception("SourceDirEmpty");
+            
             // If no drives are checked in CheckedListBox, exit method 
-            if (lv.CheckedItems.Count == 0)
-            {
-                MessageBox.Show("Please select at least one destination drive.", "USB Batch Copy", MessageBoxButtons.OK);
-                return;
-            }
-
-            // Add checked items in CheckedListBox to list object
-            AddDrivesToCopyList(lv, listDrivesToCopy);
+            if (destList.Count == 0)
+                throw new Exception("NoDestDir");
 
             // Check to make sure source drive and destination drive are not the same, exit if true
             // Check to make sure user did not remove drive after refresh, but before copy
-            foreach (var destDir in listDrivesToCopy)
+            foreach (var destDir in destList)
             {
-                if (sourceDir.Substring(0, 1) == destDir.Substring(0, 1))
-                {
-                    MessageBox.Show("Source drive and destination drive cannot be the same.  Please try again.", "USB Batch Copy", MessageBoxButtons.OK);
-                    return;
-                }
+                if (srcDir.Substring(0, 1) == destDir.Substring(0, 1))
+                    throw new Exception("SourceAndDestSame");
                 if (!Directory.Exists(destDir))
-                {
-                    MessageBox.Show("Target destination drive does not exist.  Please try again.");
-                    PopulateListView(lv);
-                    //RefreshDrives(lstDrives, dictRemovableDrives);
-                    return;
-                }
+                    throw new Exception("DestDriveNotExist");
             }
 
             // Disable UI controls and set some variables    
@@ -345,17 +324,57 @@ namespace WindowsFormsApplication1
             lblStatus.ForeColor = Color.Black;
 
             // Begin the copy in BackgroundWorker
-            backgroundWorker1.RunWorkerAsync();
+            backgroundWorker1.RunWorkerAsync(srcDir);
         }
 
         private void btnStartCopy_Click(object sender, EventArgs e)
         {
-            StartCopy();
+            string srcDir = "";
+            TreeNode aNode = dirsTreeView.SelectedNode;
+
+            AddDrivesToCopyList(lvDrives, listDrivesToCopy);
+
+            if (aNode != null)
+                srcDir = (string)aNode.Tag;            
+
+            try
+            {
+                ValidateCopyParams(srcDir, listDrivesToCopy);
+            }
+            catch (Exception ex)
+            {
+                switch (ex.Message)
+                {
+                    case "SourceDirNotFound":
+                        MessageBox.Show("Please select a valid source folder.", "USB Batch Copy", MessageBoxButtons.OK);
+                        break;
+                    case "DriveNotReady":
+                        MessageBox.Show("Source drive is not ready.  Please try again.", "USB Batch Copy", MessageBoxButtons.OK);
+                        PopulateTreeView(dirsTreeView);
+                        break;
+                    case "SourceDirEmpty":
+                        MessageBox.Show("Source folder is empty; cannot copy an empty folder.  Please try again.", "USB Batch Copy", MessageBoxButtons.OK);
+                        break;
+                    case "NoDestDir":
+                        MessageBox.Show("Please select at lease one destination drive.", "USB Batch Copy", MessageBoxButtons.OK);
+                        break;
+                    case "SourceAndDestSame":
+                        MessageBox.Show("Source drive and destination drive cannot be the same.  Please try again.", "USB Batch Copy", MessageBoxButtons.OK);
+                        break;
+                    case "DestDriveNotExist":
+                        MessageBox.Show("Target destination drive does not exist.  Please try again.");
+                        PopulateListView(lvDrives);
+                        break;
+                    default:
+                        MessageBox.Show(ex.Message);
+                        break;
+                }
+            }
         }
                 
         private void tmrRefresh_Tick(object sender, EventArgs e)
         {
-            lblSelectedDrives.Text = string.Format("Drives Selected: {0}", lv.CheckedItems.Count);
+            lblSelectedDrives.Text = string.Format("Drives Selected: {0}", lvDrives.CheckedItems.Count);
 
             // AUTOMATIC REFRESH of drive list -- Edit config file to enable/disable
             if (ConfigurationManager.AppSettings["autoRefresh"] == "1")
@@ -363,34 +382,38 @@ namespace WindowsFormsApplication1
                 IEnumerable<DriveInfo> drives = GetRemovableDrives();
 
                 if (drives.Count() != currDriveCount)
-                    RefreshDrives(lstDrives, dictRemovableDrives);
+                    PopulateListView(lvDrives);
 
                 currDriveCount = drives.Count();
             }
         }
 
         private void backgroundWorker1_DoWork(object sender, System.ComponentModel.DoWorkEventArgs e)
-        {
-            int totalItems = listDrivesToCopy.Count();
-
-            // Start copy execution
+        {            
             try
-            {
-                for (int i = 0; i < listDrivesToCopy.Count(); i++)
-                {
-                    ExecuteSecure(() => lblStatus.Text = string.Format("Copying drive {0} of {1}..", (i + 1), totalItems));  // Update status label securely
-                    string destDir = listDrivesToCopy[i];
-                    FileSystem.CopyDirectory(sourceDir, destDir, UIOption.AllDialogs, UICancelOption.ThrowException);
-                }
+            {                
+                PerformCopy((string)e.Argument, listDrivesToCopy);
             }
-            catch (ArgumentException)  // Catch user removal of drive during copy and set bool flag for RunWorkerCompleted to process
+            catch (ArgumentException)  // Catch user removal of drive during copy for RunWorkerCompleted to process
             {
             }
-            catch (OperationCanceledException)  // Catch user cancelling copy and set bool flag for RunWorkerCompleted to process
+            catch (OperationCanceledException)  // Catch user cancelling copy for RunWorkerCompleted to process
             {
                 e.Cancel = true;
             }
-            catch { }
+        }
+
+        private void PerformCopy(string srcDir, List<string> destList)
+        {
+            int totalItems = destList.Count();
+
+            // Start copy execution
+            for (int i = 0; i < totalItems; i++)
+            {
+                ExecuteSecure(() => lblStatus.Text = string.Format("Copying drive {0} of {1}..", (i + 1), totalItems));  // Update status label securely
+                string destDir = destList[i];
+                FileSystem.CopyDirectory(srcDir, destDir, UIOption.AllDialogs, UICancelOption.ThrowException);
+            }            
         }
 
         private void backgroundWorker1_RunWorkerCompleted(object sender, System.ComponentModel.RunWorkerCompletedEventArgs e)
@@ -407,7 +430,7 @@ namespace WindowsFormsApplication1
                 // There was an error during the operation.
                 lblStatus.ForeColor = Color.Black;
                 lblStatus.Text = "Ready";
-                RefreshDrives(lstDrives, dictRemovableDrives);
+                PopulateListView(lvDrives);
                 MessageBox.Show("An error has occured: " + e.Error.Message, "USB Batch Copy", MessageBoxButtons.OK);
             }
             else
@@ -415,7 +438,7 @@ namespace WindowsFormsApplication1
                 // The operation completed normally.
                 PictureBox1.Visible = true;
                 lblStatus.ForeColor = Color.Green;
-                if (lstDrives.CheckedItems.Count == 1)
+                if (lvDrives.CheckedItems.Count == 1)
                     lblStatus.Text = "Success! Copied to 1 drive.";
                 else
                     lblStatus.Text = string.Format("Success! Copied to {0} drives.", listDrivesToCopy.Count());                
@@ -423,8 +446,8 @@ namespace WindowsFormsApplication1
 
             // Enable UI controls            
             EnableUI();
-
-            SetCheckState(lstDrives, false);
+            
+            SetListViewCheckState(lvDrives, false);
         }
 
         private void EnableUI()
@@ -434,8 +457,9 @@ namespace WindowsFormsApplication1
             btnStartCopy.Enabled = true;
             btnSelectAll.Enabled = true;
             btnSelectNone.Enabled = true;
-            lstDrives.Enabled = true;
+            lvDrives.Enabled = true;
             dirsTreeView.Enabled = true;
+            tmrRefresh.Enabled = true;
         }
 
         private void DisableUI()
@@ -445,8 +469,9 @@ namespace WindowsFormsApplication1
             btnStartCopy.Enabled = false;
             btnSelectAll.Enabled = false;
             btnSelectNone.Enabled = false;
-            lstDrives.Enabled = false;
+            lvDrives.Enabled = false;
             dirsTreeView.Enabled = false;
+            tmrRefresh.Enabled = false;
         }
 
         /// <summary>
@@ -575,23 +600,7 @@ namespace WindowsFormsApplication1
         public bool IsDirectoryEmpty(string path)
         {
             return !Directory.EnumerateFileSystemEntries(path).Any();
-        }
-
-        private void button1_Click(object sender, EventArgs e)
-        {
-            PopulateListView(lv);
-        }
-
-        private void button2_Click(object sender, EventArgs e)
-        {
-            AddDrivesToCopyList(lv, listDrivesToCopy);
-        }
-
-        private void listView1_MouseClick(object sender, MouseEventArgs e)
-        {
-            ListViewItem lvi = lv.GetItemAt(e.X, e.Y);
-            if (e.X > 16) lvi.Checked = !lvi.Checked;
-        }
+        }        
 
         /*public string GetDriveLabels(string driveNameAsLetterColonBackslash)
         {
