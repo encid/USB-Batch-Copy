@@ -1,6 +1,7 @@
 ﻿/*
  USB Batch Copy
  Written by R. Cavallaro
+ Version 1.07
 */
 
 using Microsoft.VisualBasic.FileIO;
