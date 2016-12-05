@@ -107,25 +107,12 @@ namespace WindowsFormsApplication1
             string[] orders = new string[] { "GB", "MB", "KB", "Bytes" };
             long max        = (long)Math.Pow(scale, orders.Length - 1);
 
-            foreach (string order in orders)
-            {
+            foreach (string order in orders) { 
                 if (bytes > max)
                     return string.Format("{0:##.##} {1}", decimal.Divide(bytes, max), order);
                 max /= scale;
             }
             return "0 Bytes";
-        }
-
-        /// <summary>
-        /// Set CheckState for all items in a CheckedListBox.
-        /// </summary>
-        /// <param name="list">CheckedListBox to set CheckState on.</param>
-        /// <param name="choice">Set CheckState; Checked = True and Unchecked = False.</param>
-        private void SetCheckState(CheckedListBox list, bool choice)
-        // Check or uncheck all items in CheckedListBox, choice = false for uncheck, choice = true for check
-        {
-            for (int i = 0; i < list.Items.Count; i++)
-                list.SetItemChecked(i, choice);
         }
 
         /// <summary>
@@ -140,18 +127,13 @@ namespace WindowsFormsApplication1
                 item.Checked = choice;
         }
 
-
         private void Form1_Load(object sender, EventArgs e)
         {
-            if (ConfigurationManager.AppSettings["autoRefresh"] == "1")
-            {
+            if (ConfigurationManager.AppSettings["autoRefresh"] == "1") { 
                 btnRefreshDrives.Font    = new Font("Arial", 8.25F, FontStyle.Italic, GraphicsUnit.Point, ((byte)(0)));
                 btnRefreshDrives.Text    = "Auto-Detect On";
                 btnRefreshDrives.Enabled = false;
             }
-
-            //TreeNode treeNode = dirsTreeView.Nodes[0];
-            //dirsTreeView.SelectedNode = treeNode;
         }
 
         /// <summary>
@@ -159,7 +141,7 @@ namespace WindowsFormsApplication1
         /// </summary>
         /// <returns></returns>
         private IEnumerable<DriveInfo> GetRemovableDrives()
-        {
+        { 
             // Get collection of connected drives and query for removable and ready drives
             IEnumerable<DriveInfo> retVal =
                 from d in DriveInfo.GetDrives()
@@ -168,39 +150,6 @@ namespace WindowsFormsApplication1
                 select d;
 
             return retVal;
-        }
-
-        /// <summary>
-        /// Detects removable drives, adds them to dictionary (dict), then binds dictionary to listbox (clb).
-        /// </summary>
-        /// <param name="clb">CheckedListBox object to display removable drives.</param>
-        /// <param name="dict">Dictionary to bind to CheckedListBox.</param>
-        private void RefreshDrives(CheckedListBox clb, Dictionary<string, string> dict)
-        // Detects removable drives, adds them to dictionary, binds dictionary to listbox
-        {
-            dict.Clear();
-            clb.DataSource = null;
-
-            IEnumerable<DriveInfo> drives = GetRemovableDrives();
-
-            // If no removable drives detected, exit method
-            if (!drives.Any()) return;
-
-            // Iterate through collection, add drive name and drive information to dictionary
-            foreach (var drive in drives)
-            {
-                var freeSpace  = FormatBytes(drive.TotalFreeSpace);
-                var totalSpace = FormatBytes(drive.TotalSize);
-                var drvInfo    = String.Format("{0} - ( Label: {1}, FileSystem: {2}, Size: {3}, Free: {4} )",
-                                    drive.Name, drive.VolumeLabel, drive.DriveFormat,
-                                    totalSpace, freeSpace);
-                dict.Add(drive.Name, drvInfo);
-            }
-
-            // Bind dictionary as CheckedListBox DataSource and set other properties
-            clb.DataSource    = new BindingSource(dictRemovableDrives, null);
-            clb.DisplayMember = "Value";
-            clb.ValueMember   = "Key";
         }
 
         /// <summary>
@@ -217,8 +166,7 @@ namespace WindowsFormsApplication1
             if (!drives.Any()) return;
 
             // Iterate through collection, add drive name and drive information to dictionary
-            foreach (var drive in drives)
-            {
+            foreach (var drive in drives) {
                 var freeSpace = FormatBytes(drive.TotalFreeSpace);
                 var totalSpace = FormatBytes(drive.TotalSize);
 
@@ -234,8 +182,7 @@ namespace WindowsFormsApplication1
             }
 
             // Set column width
-            for (int i = 0; i < lview.Columns.Count;  i++)
-            {
+            for (int i = 0; i < lview.Columns.Count;  i++) { 
                 lview.Columns[i].Width = -2;
             }
         }
@@ -251,25 +198,9 @@ namespace WindowsFormsApplication1
             list.Clear();
 
             // Iterate through checked items in ListView and add them to list collection
-            foreach (ListViewItem item in lview.CheckedItems)
-            {
+            foreach (ListViewItem item in lview.CheckedItems) {
                 list.Add(item.Text);
             }
-        }
-
-        /// <summary>
-        /// Add checked items in CheckedListBox to list collection.
-        /// </summary>
-        /// <param name="clb">CheckedListBox to parse.</param>
-        /// <param name="list">List collection to add items to.</param>
-        private void old_AddDrivesToCopyList(CheckedListBox clb, List<string> list)
-        {
-            // Clear list collection.
-            list.Clear();
-
-            // Iterate through KeyValuePairs in CheckedListBox and add each Key to list collection                        
-            foreach (KeyValuePair<string, string> pair in clb.CheckedItems)
-                list.Add(pair.Key);            
         }
 
         private void btnSelectAll_Click(object sender, EventArgs e)
@@ -311,8 +242,7 @@ namespace WindowsFormsApplication1
 
             // Check to make sure source drive and destination drive are not the same, exit if true
             // Check to make sure user did not remove drive after refresh, but before copy
-            foreach (var destDir in destList)
-            {
+            foreach (var destDir in destList) {
                 if (srcDir.Substring(0, 1) == destDir.Substring(0, 1))
                     throw new Exception("SourceAndDestSame");
                 if (!Directory.Exists(destDir))
@@ -336,16 +266,13 @@ namespace WindowsFormsApplication1
             AddDrivesToCopyList(lvDrives, listDrivesToCopy);
 
             if (aNode != null)
-                srcDir = (string)aNode.Tag;            
+                srcDir = (string)aNode.Tag;
 
-            try
-            {
+            try {
                 ValidateCopyParams(srcDir, listDrivesToCopy);
             }
-            catch (Exception ex)
-            {
-                switch (ex.Message)
-                {
+            catch (Exception ex) {
+                switch (ex.Message) {
                     case "SourceDirNotFound":
                         MessageBox.Show("Please select a valid source folder.", "USB Batch Copy", MessageBoxButtons.OK);
                         break;
@@ -369,7 +296,7 @@ namespace WindowsFormsApplication1
                     default:
                         MessageBox.Show(ex.Message);
                         break;
-                }
+                }                
             }
         }
                 
@@ -378,8 +305,7 @@ namespace WindowsFormsApplication1
             lblSelectedDrives.Text = string.Format("Drives Selected: {0}", lvDrives.CheckedItems.Count);
 
             // AUTOMATIC REFRESH of drive list -- Edit config file to enable/disable
-            if (ConfigurationManager.AppSettings["autoRefresh"] == "1")
-            {
+            if (ConfigurationManager.AppSettings["autoRefresh"] == "1") { 
                 IEnumerable<DriveInfo> drives = GetRemovableDrives();
 
                 if (drives.Count() != currDriveCount)
@@ -387,19 +313,17 @@ namespace WindowsFormsApplication1
 
                 currDriveCount = drives.Count();
             }
+            
         }
 
         private void backgroundWorker1_DoWork(object sender, System.ComponentModel.DoWorkEventArgs e)
         {            
-            try
-            {                
+            try {                
                 PerformCopy((string)e.Argument, listDrivesToCopy);
             }
-            catch (ArgumentException)  // Catch user removal of drive during copy for RunWorkerCompleted to process
-            {
+            catch (ArgumentException) {  // Catch user removal of drive during copy for RunWorkerCompleted to process
             }
-            catch (OperationCanceledException)  // Catch user cancelling copy for RunWorkerCompleted to process
-            {
+            catch (OperationCanceledException) {  // Catch user cancelling copy for RunWorkerCompleted to process
                 e.Cancel = true;
             }
         }
@@ -409,8 +333,7 @@ namespace WindowsFormsApplication1
             int totalItems = destList.Count();
 
             // Start copy execution
-            for (int i = 0; i < totalItems; i++)
-            {
+            for (int i = 0; i < totalItems; i++) {
                 ExecuteSecure(() => lblStatus.Text = string.Format("Copying drive {0} of {1}..", (i + 1), totalItems));  // Update status label securely
                 string destDir = destList[i];
                 FileSystem.CopyDirectory(srcDir, destDir, UIOption.AllDialogs, UICancelOption.ThrowException);
@@ -419,23 +342,22 @@ namespace WindowsFormsApplication1
 
         private void backgroundWorker1_RunWorkerCompleted(object sender, System.ComponentModel.RunWorkerCompletedEventArgs e)
         {                        
-            if (e.Cancelled)
-            {   
+            if (e.Cancelled) {   
                 // The user cancelled the operation.                
                 lblStatus.ForeColor = Color.Black;
                 lblStatus.Text = "Ready";
                 MessageBox.Show("Copying operation has been cancelled.", "USB Batch Copy", MessageBoxButtons.OK);
+                this.BringToFront();
             }            
-            else if (e.Error != null)
-            {
+            else if (e.Error != null) {
                 // There was an error during the operation.
                 lblStatus.ForeColor = Color.Black;
                 lblStatus.Text = "Ready";
                 PopulateListView(lvDrives);
                 MessageBox.Show("An error has occured: " + e.Error.Message, "USB Batch Copy", MessageBoxButtons.OK);
+                this.BringToFront();
             }
-            else
-            {
+            else {
                 // The operation completed normally.
                 PictureBox1.Visible = true;
                 lblStatus.ForeColor = Color.Green;
@@ -488,15 +410,13 @@ namespace WindowsFormsApplication1
             string[] drives = Environment.GetLogicalDrives();
             
             // Iterate through drives to set icons and labels
-            foreach (string drive in drives)
-            {
+            foreach (string drive in drives) {
                 DriveInfo di    = new DriveInfo(drive);
                 string drvLabel = string.Empty;
                 int driveImage;
 
                 // Set drive's icon and label based on drive type
-                switch (di.DriveType)
-                {
+                switch (di.DriveType) {
                     case DriveType.Fixed:
                         driveImage = 2;
                         if (di.VolumeLabel == string.Empty)
@@ -531,7 +451,8 @@ namespace WindowsFormsApplication1
                 }                
 
                 // If drive label exists, add a space after it
-                if (!string.IsNullOrEmpty(drvLabel)) { drvLabel = drvLabel + " "; }
+                if (!string.IsNullOrEmpty(drvLabel))
+                    drvLabel = drvLabel + " ";
                                               
                 TreeNode node = new TreeNode(drvLabel + "(" + di.Name.Substring(0, 2) + ")", driveImage, driveImage);
                 
@@ -546,42 +467,35 @@ namespace WindowsFormsApplication1
 
         private void dirsTreeView_BeforeExpand(object sender, TreeViewCancelEventArgs e)
         {
-            if (e.Node.Nodes.Count > 0)
-            {
-                if (e.Node.Nodes[0].Text == "..." && e.Node.Nodes[0].Tag == null)
-                {
+            if (e.Node.Nodes.Count > 0) {
+                if (e.Node.Nodes[0].Text == "..." && e.Node.Nodes[0].Tag == null) {
                     e.Node.Nodes.Clear();
 
                     //get the list of sub direcotires
                     //IEnumerable<string> dirs = Directory.EnumerateDirectories((string)e.Node.Tag);
                     List<string> dirs = new List<string>(Directory.GetDirectories((string)e.Node.Tag));
 
-                    foreach (string dir in dirs)
-                    {
+                    foreach (string dir in dirs) {
                         var di = new DirectoryInfo(dir);
                         var node = new TreeNode(di.Name, 0, 1);
 
-                        try
-                        {
+                        try {
                             node.Tag = dir;  //keep the directory's full path in the tag for use later
 
                             //if the directory has any sub directories add the place holder
                             if (di.GetDirectories().Count() > 0)
                                 node.Nodes.Add(null, "...", 0, 0);
                         }
-                        catch (UnauthorizedAccessException)
-                        {
+                        catch (UnauthorizedAccessException) {
                             //if an unauthorized access exception occured display a locked folder
                             node.ImageIndex = 12;
                             node.SelectedImageIndex = 12;
                         }
-                        catch (Exception ex)
-                        {
+                        catch (Exception ex) {
                             MessageBox.Show(ex.Message, "USB Batch Copy", MessageBoxButtons.OK,
                                 MessageBoxIcon.Error);
                         }
-                        finally
-                        {
+                        finally {
                             e.Node.Nodes.Add(node);
                         }
                     }
