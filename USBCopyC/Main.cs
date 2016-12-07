@@ -19,8 +19,6 @@ namespace WindowsFormsApplication1
     public partial class Main : Form
     {
       //const string SHELL = "shell32.dll";
-        Dictionary<string, string> dictRemovableDrives = new Dictionary<string, string>();
-        FolderBrowserDialog fbd = new FolderBrowserDialog();
         List<string> listDrivesToCopy = new List<string>();
         int currDriveCount;
 
@@ -86,7 +84,7 @@ namespace WindowsFormsApplication1
         }
 
         /// <summary>
-        /// Determines if an invoke is required to perform an action.
+        /// Automatically and safely performs an action the appropriate thread.
         /// </summary>
         /// <param name="a">Action to perform.</param>
         private void ExecuteSecure(Action a)
