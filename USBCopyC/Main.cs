@@ -84,7 +84,7 @@ namespace WindowsFormsApplication1
         }
 
         /// <summary>
-        /// Automatically and safely performs an action the appropriate thread.
+        /// Performs an action safely the appropriate thread.
         /// </summary>
         /// <param name="a">Action to perform.</param>
         private void ExecuteSecure(Action a)
@@ -109,10 +109,26 @@ namespace WindowsFormsApplication1
 
             foreach (string order in orders) { 
                 if (bytes > max)
-                    return string.Format("{0:##.##} {1}", decimal.Divide(bytes, max), order);
+                    return string.Format("{0:##.#} {1}", decimal.Divide(bytes, max), order);
                 max /= scale;
             }
             return "0 Bytes";
+        }
+
+        /// <summary>
+        /// Format a long number into a readable string; i.e. input: 15520 output: "15.5 KB"
+        /// </summary>
+        /// <param name="byteCount">Number of bytes.</param>
+        /// <returns></returns>
+        private string BytesToString(long byteCount)
+        {
+            string[] suf = { "B", "KB", "MB", "GB", "TB", "PB", "EB" }; //Longs run out around EB
+            if (byteCount == 0)
+                return "0" + suf[0];
+            long bytes = Math.Abs(byteCount);
+            int place = Convert.ToInt32(Math.Floor(Math.Log(bytes, 1024)));
+            double num = Math.Round(bytes / Math.Pow(1024, place), 1);
+            return (Math.Sign(byteCount) * num).ToString() + suf[place];
         }
 
         /// <summary>
@@ -120,10 +136,10 @@ namespace WindowsFormsApplication1
         /// </summary>
         /// <param name="list">ListView to set CheckState on.</param>
         /// <param name="choice">Set CheckState; Checked = True and Unchecked = False.</param>
-        private void SetListViewCheckState(ListView list, bool choice)
+        private void SetListViewCheckState(ListView lview, bool choice)
         // Check or uncheck all items in CheckedListBox, choice = false for uncheck, choice = true for check
         {
-            foreach (ListViewItem item in list.Items)
+            foreach (ListViewItem item in lview.Items)
                 item.Checked = choice;
         }
 
@@ -167,8 +183,8 @@ namespace WindowsFormsApplication1
 
             // Iterate through collection, add drive name and drive information to dictionary
             foreach (var drive in drives) {
-                var freeSpace = FormatBytes(drive.TotalFreeSpace);
-                var totalSpace = FormatBytes(drive.TotalSize);
+                var freeSpace = BytesToString(drive.TotalFreeSpace);
+                var totalSpace = BytesToString(drive.TotalSize);
 
                 ListViewItem oItem = new ListViewItem();
                 
@@ -248,14 +264,6 @@ namespace WindowsFormsApplication1
                 if (!Directory.Exists(destDir))
                     throw new Exception("DestDriveNotExist");
             }
-
-            // Disable UI controls and set some variables    
-            DisableUI();
-            lblStatus.Text = "Copying...";
-            lblStatus.ForeColor = Color.Black;
-
-            // Begin the copy in BackgroundWorker
-            backgroundWorker1.RunWorkerAsync(srcDir);
         }
 
         private void btnStartCopy_Click(object sender, EventArgs e)
@@ -269,32 +277,42 @@ namespace WindowsFormsApplication1
                 srcDir = (string)aNode.Tag;
 
             try {
+                // Validate user input on UI
                 ValidateCopyParams(srcDir, listDrivesToCopy);
+
+                // No exceptions, so continue....
+                // Disable UI controls and set status
+                DisableUI();
+                lblStatus.Text = "Copying...";
+                lblStatus.ForeColor = Color.Black;
+
+                // Begin the copy in BackgroundWorker
+                backgroundWorker1.RunWorkerAsync(srcDir);
             }
             catch (Exception ex) {
                 switch (ex.Message) {
                     case "SourceDirNotFound":
-                        MessageBox.Show("Please select a valid source folder.", "USB Batch Copy", MessageBoxButtons.OK);
+                        MessageBox.Show("Error:  Please select a valid source folder.", "USB Batch Copy", MessageBoxButtons.OK, MessageBoxIcon.Error);
                         break;
                     case "DriveNotReady":
-                        MessageBox.Show("Source drive is not ready.  Please try again.", "USB Batch Copy", MessageBoxButtons.OK);
+                        MessageBox.Show("Error:  Source drive is not ready. Please try again.", "USB Batch Copy", MessageBoxButtons.OK, MessageBoxIcon.Error);
                         PopulateTreeView(dirsTreeView);
                         break;
                     case "SourceDirEmpty":
-                        MessageBox.Show("Source folder is empty; cannot copy an empty folder.  Please try again.", "USB Batch Copy", MessageBoxButtons.OK);
+                        MessageBox.Show("Error:  Source folder is empty; cannot copy an empty folder. Please try again.", "USB Batch Copy", MessageBoxButtons.OK, MessageBoxIcon.Error);
                         break;
                     case "NoDestDir":
-                        MessageBox.Show("Please select at lease one destination drive.", "USB Batch Copy", MessageBoxButtons.OK);
+                        MessageBox.Show("Error:  Please select at lease one destination drive.", "USB Batch Copy", MessageBoxButtons.OK, MessageBoxIcon.Error);
                         break;
                     case "SourceAndDestSame":
-                        MessageBox.Show("Source drive and destination drive cannot be the same.  Please try again.", "USB Batch Copy", MessageBoxButtons.OK);
+                        MessageBox.Show("Error:  Source drive and destination drive cannot be the same. Please try again.", "USB Batch Copy", MessageBoxButtons.OK, MessageBoxIcon.Error);
                         break;
                     case "DestDriveNotExist":
-                        MessageBox.Show("Target destination drive does not exist.  Please try again.");
+                        MessageBox.Show("Error:  Target destination drive does not exist.  Please try again.", "USB Batch Copy", MessageBoxButtons.OK, MessageBoxIcon.Error);
                         PopulateListView(lvDrives);
                         break;
                     default:
-                        MessageBox.Show(ex.Message);
+                        MessageBox.Show("Error:  " + ex.Message, "USB Batch Copy", MessageBoxButtons.OK, MessageBoxIcon.Error);
                         break;
                 }                
             }
@@ -347,7 +365,7 @@ namespace WindowsFormsApplication1
                 lblStatus.ForeColor = Color.Black;
                 lblStatus.Text = "Ready";
                 MessageBox.Show("Copying operation has been cancelled.", "USB Batch Copy", MessageBoxButtons.OK);
-                this.BringToFront();
+                this.Focus();
             }            
             else if (e.Error != null) {
                 // There was an error during the operation.
@@ -355,7 +373,7 @@ namespace WindowsFormsApplication1
                 lblStatus.Text = "Ready";
                 PopulateListView(lvDrives);
                 MessageBox.Show("An error has occured: " + e.Error.Message, "USB Batch Copy", MessageBoxButtons.OK);
-                this.BringToFront();
+                this.Focus();
             }
             else {
                 // The operation completed normally.
