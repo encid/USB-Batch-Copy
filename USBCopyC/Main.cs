@@ -18,7 +18,6 @@ namespace WindowsFormsApplication1
 {
     public partial class Main : Form {
         //const string SHELL = "shell32.dll";
-        List<string> listDrivesToCopy = new List<string>();
         int currDriveCount;
 
         //[DllImport(SHELL, CharSet = CharSet.Unicode)]
@@ -90,6 +89,26 @@ namespace WindowsFormsApplication1
             });
         }
 
+        private struct CopyParams {
+            public readonly string SourceDir;
+            public readonly List<string> DestDirs;
+            public CopyParams(string source, List<string> destinations) {
+                SourceDir = source;
+                DestDirs = destinations;
+            }
+        }
+
+        private List<String> GetDestinationDrives(ListView lview)
+        {
+            List<String> temp = new List<string>();
+
+            foreach (ListViewItem item in lview.CheckedItems) {
+                temp.Add(item.Text);
+            }
+            
+            return temp;
+        }
+
         /// <summary>
         /// Format a long number into a readable string; i.e. input: 15520 output: "15.52 KB"
         /// </summary>
@@ -153,17 +172,10 @@ namespace WindowsFormsApplication1
         /// <returns></returns>
         private IEnumerable<DriveInfo> GetRemovableDrives()
         {
-            // Get collection of connected drives and query for removable and ready drives
-            //IEnumerable<DriveInfo> retVal =
-            //    from d in DriveInfo.GetDrives()
-            //    where d.DriveType == DriveType.Removable &&
-            //          d.IsReady
-            //    select d;
+            var drives = DriveInfo.GetDrives();
+            var d = DriveInfo.GetDrives().Where(p => p.DriveType == DriveType.Removable && p.IsReady);
 
-            //var drives = DriveInfo.GetDrives();
-            //var d = DriveInfo.GetDrives().Where(p => p.DriveType == DriveType.Removable && p.IsReady);
-
-            return DriveInfo.GetDrives().Where(p => p.DriveType == DriveType.Removable && p.IsReady);
+            return d;
         }
 
         /// <summary>
@@ -201,22 +213,6 @@ namespace WindowsFormsApplication1
             }
         }
 
-        /// <summary>
-        /// Add checked items in ListView to list collection.
-        /// </summary>
-        /// <param name="lview">ListView to parse.</param>
-        /// <param name="list">List collection to add items to.</param>
-        private void AddDrivesToCopyList(ListView lview, List<string> list)
-        {
-            // Clear list collection.
-            list.Clear();
-
-            // Iterate through checked items in ListView and add them to list collection
-            foreach (ListViewItem item in lview.CheckedItems) {
-                list.Add(item.Text);
-            }
-        }
-
         private void btnSelectAll_Click(object sender, EventArgs e)
         // Sets check state for all listed drives to true.
         {
@@ -239,8 +235,8 @@ namespace WindowsFormsApplication1
         /// Validates the UI input parameters for copying, and throws exceptions based on parameters.
         /// </summary>
         /// <param name="srcDir">Source directory to copy from.</param>
-        /// <param name="destList">Destination directories in list collection.</param>
-        private void ValidateCopyParams(string srcDir, List<string> destList)
+        /// <param name="destDirs">Destination directories in list collection.</param>
+        private void ValidateCopyParams(string srcDir, List<string> destDirs)
         {
             // Check to make sure user has selected a source folder.
             if (srcDir == "")
@@ -256,12 +252,12 @@ namespace WindowsFormsApplication1
                 throw new Exception("Source folder is empty; cannot copy an empty folder. Please try again.");
 
             // If no drives are checked in CheckedListBox, exit method 
-            if (destList.Count == 0)
-                throw new Exception("Please select at lease one destination drive.");
+            if (destDirs.Count == 0)
+                throw new Exception("Please select at least one destination drive.");
 
             // Check to make sure source drive and destination drive are not the same, exit if true
             // Check to make sure user did not remove drive after refresh, but before copy
-            foreach (var destDir in destList) {
+            foreach (var destDir in destDirs) {
                 if (srcDir.Substring(0, 1) == destDir.Substring(0, 1))
                     throw new Exception("Source drive and destination drive cannot be the same. Please try again.");
                 if (!Directory.Exists(destDir))
@@ -272,16 +268,19 @@ namespace WindowsFormsApplication1
         private void btnStartCopy_Click(object sender, EventArgs e)
         {
             string srcDir = "";
+            //List<string> destList = GetDestinationDrives(lvDrives);
             TreeNode aNode = dirsTreeView.SelectedNode;
 
-            AddDrivesToCopyList(lvDrives, listDrivesToCopy);
-
+            //AddDrivesToCopyList(lvDrives, GetDestinationDrives(lvDrives));
+            
             if (aNode != null)
                 srcDir = (string)aNode.Tag;
 
+            CopyParams cp = new CopyParams(srcDir, GetDestinationDrives(lvDrives));
+
             try {
                 // Validate user input on UI
-                ValidateCopyParams(srcDir, listDrivesToCopy);
+                ValidateCopyParams(cp.SourceDir, cp.DestDirs);
 
                 // No exceptions, so continue....
                 // Disable UI controls and set status
@@ -290,7 +289,7 @@ namespace WindowsFormsApplication1
                 lblStatus.ForeColor = Color.Black;
 
                 // Begin the copy in BackgroundWorker
-                backgroundWorker1.RunWorkerAsync(srcDir);
+                backgroundWorker1.RunWorkerAsync(cp);
             }            
             catch (Exception ex) {
                 MessageBox.Show("Error:  " + ex.Message, "USB Batch Copy", MessageBoxButtons.OK, MessageBoxIcon.Error);
@@ -317,9 +316,11 @@ namespace WindowsFormsApplication1
         }
 
         private void backgroundWorker1_DoWork(object sender, System.ComponentModel.DoWorkEventArgs e)
-        {            
+        {
+            CopyParams cp = (CopyParams)e.Argument;
+
             try {                
-                PerformCopy((string)e.Argument, listDrivesToCopy);
+                PerformCopy(cp.SourceDir, cp.DestDirs);
             }
             catch (ArgumentException) {  // Catch user removal of drive during copy for RunWorkerCompleted to process
             }
@@ -328,14 +329,14 @@ namespace WindowsFormsApplication1
             }
         }
 
-        private void PerformCopy(string srcDir, List<string> destList)
+        private void PerformCopy(string srcDir, List<string> destDirs)
         {
-            int totalItems = destList.Count();
+            int totalItems = destDirs.Count();
 
             // Start copy execution
             for (int i = 0; i < totalItems; i++) {
                 ExecuteSecure(() => lblStatus.Text = string.Format("Copying drive {0} of {1}..", (i + 1), totalItems));  // Update status label securely
-                string destDir = destList[i];
+                string destDir = destDirs[i];
                 FileSystem.CopyDirectory(srcDir, destDir, UIOption.AllDialogs, UICancelOption.ThrowException);
             }            
         }
@@ -364,7 +365,7 @@ namespace WindowsFormsApplication1
                 if (lvDrives.CheckedItems.Count == 1)
                     lblStatus.Text = "Success! Copied to 1 drive.";
                 else
-                    lblStatus.Text = string.Format("Success! Copied to {0} drives.", listDrivesToCopy.Count());                
+                    lblStatus.Text = string.Format("Success! Copied to {0} drives.", GetDestinationDrives(lvDrives).Count());                
             }
 
             // Enable UI controls            
