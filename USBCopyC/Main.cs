@@ -173,7 +173,7 @@ namespace WindowsFormsApplication1
         private IEnumerable<DriveInfo> GetRemovableDrives()
         {
             var drives = DriveInfo.GetDrives();
-            var d = DriveInfo.GetDrives().Where(p => p.DriveType == DriveType.Removable && p.IsReady);
+            var d = drives.Where(p => p.DriveType == DriveType.Removable && p.IsReady);
 
             return d;
         }
