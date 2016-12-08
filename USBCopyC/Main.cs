@@ -16,9 +16,8 @@ using System.Management;
 
 namespace WindowsFormsApplication1
 {
-    public partial class Main : Form
-    {
-      //const string SHELL = "shell32.dll";
+    public partial class Main : Form {
+        //const string SHELL = "shell32.dll";
         List<string> listDrivesToCopy = new List<string>();
         int currDriveCount;
 
@@ -49,31 +48,27 @@ namespace WindowsFormsApplication1
 
             // Keep selected node highlighted if TreeView control loses focus            
             dirsTreeView.BeforeExpand += new TreeViewCancelEventHandler(this.dirsTreeView_BeforeExpand);
-            dirsTreeView.DrawNode += (o, e) =>
-                {
-                    if (!e.Node.TreeView.Focused && e.Node == e.Node.TreeView.SelectedNode)
-                    {
-                        Font treeFont = e.Node.NodeFont ?? e.Node.TreeView.Font;
-                        e.Graphics.FillRectangle(SystemBrushes.Highlight, e.Bounds);
-                        ControlPaint.DrawFocusRectangle(e.Graphics, e.Bounds, SystemColors.HighlightText, SystemColors.Highlight);
-                        TextRenderer.DrawText(e.Graphics, e.Node.Text, treeFont, e.Bounds, SystemColors.HighlightText, TextFormatFlags.GlyphOverhangPadding);
-                    }
-                    else
-                        e.DrawDefault = true;
-                };
-            dirsTreeView.MouseDown += (o, e) =>
-                {
-                    TreeNode node = dirsTreeView.GetNodeAt(e.X, e.Y);
-                    if (node != null && node.Bounds.Contains(e.X, e.Y))
-                        dirsTreeView.SelectedNode = node;
-                };
+            dirsTreeView.DrawNode += (o, e) => {
+                if (!e.Node.TreeView.Focused && e.Node == e.Node.TreeView.SelectedNode) {
+                    Font treeFont = e.Node.NodeFont ?? e.Node.TreeView.Font;
+                    e.Graphics.FillRectangle(SystemBrushes.Highlight, e.Bounds);
+                    ControlPaint.DrawFocusRectangle(e.Graphics, e.Bounds, SystemColors.HighlightText, SystemColors.Highlight);
+                    TextRenderer.DrawText(e.Graphics, e.Node.Text, treeFont, e.Bounds, SystemColors.HighlightText, TextFormatFlags.GlyphOverhangPadding);
+                }
+                else
+                    e.DrawDefault = true;
+            };
+            dirsTreeView.MouseDown += (o, e) => {
+                TreeNode node = dirsTreeView.GetNodeAt(e.X, e.Y);
+                if (node != null && node.Bounds.Contains(e.X, e.Y))
+                    dirsTreeView.SelectedNode = node;
+            };
 
             // Tick the checkbox if any part of the item line in ListView is clicked
-            lvDrives.MouseClick += (o, e) =>
-                {
-                    ListViewItem lvi = lvDrives.GetItemAt(e.X, e.Y);
-                    if (e.X > 16) lvi.Checked = !lvi.Checked;
-                };
+            lvDrives.MouseClick += (o, e) => {
+                ListViewItem lvi = lvDrives.GetItemAt(e.X, e.Y);
+                if (e.X > 16) lvi.Checked = !lvi.Checked;
+            };
 
             // Add columns to ListView
             lvDrives.Columns.Add("Drive", -2, HorizontalAlignment.Left);
@@ -105,9 +100,9 @@ namespace WindowsFormsApplication1
         {
             const int scale = 1024;
             string[] orders = new string[] { "GB", "MB", "KB", "Bytes" };
-            long max        = (long)Math.Pow(scale, orders.Length - 1);
+            long max = (long)Math.Pow(scale, orders.Length - 1);
 
-            foreach (string order in orders) { 
+            foreach (string order in orders) {
                 if (bytes > max)
                     return string.Format("{0:##.#} {1}", decimal.Divide(bytes, max), order);
                 max /= scale;
@@ -145,9 +140,9 @@ namespace WindowsFormsApplication1
 
         private void Form1_Load(object sender, EventArgs e)
         {
-            if (ConfigurationManager.AppSettings["autoRefresh"] == "1") { 
-                btnRefreshDrives.Font    = new Font("Arial", 8.25F, FontStyle.Italic, GraphicsUnit.Point, ((byte)(0)));
-                btnRefreshDrives.Text    = "Auto-Detect On";
+            if (ConfigurationManager.AppSettings["autoRefresh"] == "1") {
+                btnRefreshDrives.Font = new Font("Arial", 8.25F, FontStyle.Italic, GraphicsUnit.Point, ((byte)(0)));
+                btnRefreshDrives.Text = "Auto-Detect On";
                 btnRefreshDrives.Enabled = false;
             }
         }
@@ -157,15 +152,18 @@ namespace WindowsFormsApplication1
         /// </summary>
         /// <returns></returns>
         private IEnumerable<DriveInfo> GetRemovableDrives()
-        { 
+        {
             // Get collection of connected drives and query for removable and ready drives
-            IEnumerable<DriveInfo> retVal =
-                from d in DriveInfo.GetDrives()
-                where d.DriveType == DriveType.Removable &&
-                      d.IsReady
-                select d;
+            //IEnumerable<DriveInfo> retVal =
+            //    from d in DriveInfo.GetDrives()
+            //    where d.DriveType == DriveType.Removable &&
+            //          d.IsReady
+            //    select d;
 
-            return retVal;
+            //var drives = DriveInfo.GetDrives();
+            //var d = DriveInfo.GetDrives().Where(p => p.DriveType == DriveType.Removable && p.IsReady);
+
+            return DriveInfo.GetDrives().Where(p => p.DriveType == DriveType.Removable && p.IsReady);
         }
 
         /// <summary>
@@ -174,31 +172,31 @@ namespace WindowsFormsApplication1
         /// <param name="lview">ListView to populate.</param>
         private void PopulateListView(ListView lview)
         {
-            lview.Items.Clear();            
+            lview.Items.Clear();
 
             IEnumerable<DriveInfo> drives = GetRemovableDrives();
 
             // If no removable drives detected, exit method
             if (!drives.Any()) return;
 
-            // Iterate through collection, add drive name and drive information to dictionary
+            // Iterate through collection and add each removable drive as to ListView as items and subitems
             foreach (var drive in drives) {
                 var freeSpace = BytesToString(drive.TotalFreeSpace);
                 var totalSpace = BytesToString(drive.TotalSize);
 
                 ListViewItem oItem = new ListViewItem();
-                
+
                 oItem.Text = drive.Name;
                 oItem.SubItems.Add(drive.VolumeLabel);
                 oItem.SubItems.Add(drive.DriveFormat);
                 oItem.SubItems.Add(freeSpace);
                 oItem.SubItems.Add(totalSpace);
 
-                lview.Items.Add(oItem);                
+                lview.Items.Add(oItem);
             }
 
             // Set column width
-            for (int i = 0; i < lview.Columns.Count;  i++) { 
+            for (int i = 0; i < lview.Columns.Count; i++) {
                 lview.Columns[i].Width = -2;
             }
         }
@@ -237,32 +235,37 @@ namespace WindowsFormsApplication1
             PopulateListView(lvDrives);
         }
 
+        /// <summary>
+        /// Validates the UI input parameters for copying, and throws exceptions based on parameters.
+        /// </summary>
+        /// <param name="srcDir">Source directory to copy from.</param>
+        /// <param name="destList">Destination directories in list collection.</param>
         private void ValidateCopyParams(string srcDir, List<string> destList)
         {
             // Check to make sure user has selected a source folder.
             if (srcDir == "")
-                throw new Exception("SourceDirNotFound");
-
+                throw new Exception("Please select a valid source folder.");
+            
             // Check if source drive is ready and exists
             DriveInfo dInfo = new DriveInfo(srcDir.Substring(0, 2));
             if (!dInfo.IsReady || !Directory.Exists(dInfo.Name))
-                throw new Exception("DriveNotReady");
+                throw new Exception("Source drive is not ready. Please try again.-resetTreeView");
 
             // Check if source folder is empty.  Exit if true
             if (IsDirectoryEmpty(srcDir))
-                throw new Exception("SourceDirEmpty");
-            
+                throw new Exception("Source folder is empty; cannot copy an empty folder. Please try again.");
+
             // If no drives are checked in CheckedListBox, exit method 
             if (destList.Count == 0)
-                throw new Exception("NoDestDir");
+                throw new Exception("Please select at lease one destination drive.");
 
             // Check to make sure source drive and destination drive are not the same, exit if true
             // Check to make sure user did not remove drive after refresh, but before copy
             foreach (var destDir in destList) {
                 if (srcDir.Substring(0, 1) == destDir.Substring(0, 1))
-                    throw new Exception("SourceAndDestSame");
+                    throw new Exception("Source drive and destination drive cannot be the same. Please try again.");
                 if (!Directory.Exists(destDir))
-                    throw new Exception("DestDriveNotExist");
+                    throw new Exception("Target destination drive does not exist. Please try again.");                
             }
         }
 
@@ -288,33 +291,13 @@ namespace WindowsFormsApplication1
 
                 // Begin the copy in BackgroundWorker
                 backgroundWorker1.RunWorkerAsync(srcDir);
-            }
+            }            
             catch (Exception ex) {
-                switch (ex.Message) {
-                    case "SourceDirNotFound":
-                        MessageBox.Show("Error:  Please select a valid source folder.", "USB Batch Copy", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                        break;
-                    case "DriveNotReady":
-                        MessageBox.Show("Error:  Source drive is not ready. Please try again.", "USB Batch Copy", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                        PopulateTreeView(dirsTreeView);
-                        break;
-                    case "SourceDirEmpty":
-                        MessageBox.Show("Error:  Source folder is empty; cannot copy an empty folder. Please try again.", "USB Batch Copy", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                        break;
-                    case "NoDestDir":
-                        MessageBox.Show("Error:  Please select at lease one destination drive.", "USB Batch Copy", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                        break;
-                    case "SourceAndDestSame":
-                        MessageBox.Show("Error:  Source drive and destination drive cannot be the same. Please try again.", "USB Batch Copy", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                        break;
-                    case "DestDriveNotExist":
-                        MessageBox.Show("Error:  Target destination drive does not exist.  Please try again.", "USB Batch Copy", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                        PopulateListView(lvDrives);
-                        break;
-                    default:
-                        MessageBox.Show("Error:  " + ex.Message, "USB Batch Copy", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                        break;
-                }                
+                MessageBox.Show("Error:  " + ex.Message, "USB Batch Copy", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                if (ex.Message.Contains("Please select a valid source folder"))
+                    PopulateTreeView(dirsTreeView);                
+                if (ex.Message.Contains("Target destination drive does not exist"))
+                    PopulateListView(lvDrives);
             }
         }
                 
@@ -330,8 +313,7 @@ namespace WindowsFormsApplication1
                     PopulateListView(lvDrives);
 
                 currDriveCount = drives.Count();
-            }
-            
+            }            
         }
 
         private void backgroundWorker1_DoWork(object sender, System.ComponentModel.DoWorkEventArgs e)
@@ -533,7 +515,7 @@ namespace WindowsFormsApplication1
         public bool IsDirectoryEmpty(string path)
         {
             return !Directory.EnumerateFileSystemEntries(path).Any();
-        }        
+        }
 
         /*public string GetDriveLabels(string driveNameAsLetterColonBackslash)
         {
