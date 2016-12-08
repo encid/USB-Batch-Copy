@@ -98,15 +98,15 @@ namespace WindowsFormsApplication1
             }
         }
 
-        private List<String> GetDestinationDrives(ListView lview)
+        private List<string> GetDestinationDirs(ListView lview)
         {
-            List<String> temp = new List<string>();
+            List<string> d = new List<string>();
 
             foreach (ListViewItem item in lview.CheckedItems) {
-                temp.Add(item.Text);
+                d.Add(item.Text);
             }
             
-            return temp;
+            return d;
         }
 
         /// <summary>
@@ -268,15 +268,12 @@ namespace WindowsFormsApplication1
         private void btnStartCopy_Click(object sender, EventArgs e)
         {
             string srcDir = "";
-            //List<string> destList = GetDestinationDrives(lvDrives);
             TreeNode aNode = dirsTreeView.SelectedNode;
-
-            //AddDrivesToCopyList(lvDrives, GetDestinationDrives(lvDrives));
             
             if (aNode != null)
                 srcDir = (string)aNode.Tag;
 
-            CopyParams cp = new CopyParams(srcDir, GetDestinationDrives(lvDrives));
+            CopyParams cp = new CopyParams(srcDir, GetDestinationDirs(lvDrives));
 
             try {
                 // Validate user input on UI
@@ -288,7 +285,7 @@ namespace WindowsFormsApplication1
                 lblStatus.Text = "Copying...";
                 lblStatus.ForeColor = Color.Black;
 
-                // Begin the copy in BackgroundWorker
+                // Begin the copy in BackgroundWorker, pass CopyParams object into it
                 backgroundWorker1.RunWorkerAsync(cp);
             }            
             catch (Exception ex) {
@@ -331,11 +328,9 @@ namespace WindowsFormsApplication1
 
         private void PerformCopy(string srcDir, List<string> destDirs)
         {
-            int totalItems = destDirs.Count();
-
             // Start copy execution
-            for (int i = 0; i < totalItems; i++) {
-                ExecuteSecure(() => lblStatus.Text = string.Format("Copying drive {0} of {1}..", (i + 1), totalItems));  // Update status label securely
+            for (int i = 0; i < destDirs.Count; i++) {
+                ExecuteSecure(() => lblStatus.Text = string.Format("Copying drive {0} of {1}..", (i + 1), destDirs.Count));  // Update status label securely
                 string destDir = destDirs[i];
                 FileSystem.CopyDirectory(srcDir, destDir, UIOption.AllDialogs, UICancelOption.ThrowException);
             }            
@@ -348,6 +343,7 @@ namespace WindowsFormsApplication1
                 lblStatus.ForeColor = Color.Black;
                 lblStatus.Text = "Ready";
                 MessageBox.Show("Copying operation has been cancelled.", "USB Batch Copy", MessageBoxButtons.OK);
+                this.BringToFront();
                 this.Focus();
             }            
             else if (e.Error != null) {
@@ -356,6 +352,7 @@ namespace WindowsFormsApplication1
                 lblStatus.Text = "Ready";
                 PopulateListView(lvDrives);
                 MessageBox.Show("An error has occured: " + e.Error.Message, "USB Batch Copy", MessageBoxButtons.OK);
+                this.BringToFront();
                 this.Focus();
             }
             else {
@@ -365,7 +362,7 @@ namespace WindowsFormsApplication1
                 if (lvDrives.CheckedItems.Count == 1)
                     lblStatus.Text = "Success! Copied to 1 drive.";
                 else
-                    lblStatus.Text = string.Format("Success! Copied to {0} drives.", GetDestinationDrives(lvDrives).Count());                
+                    lblStatus.Text = string.Format("Success! Copied to {0} drives.", GetDestinationDirs(lvDrives).Count());                
             }
 
             // Enable UI controls            
@@ -504,6 +501,11 @@ namespace WindowsFormsApplication1
             }
         }
 
+        /// <summary>
+        /// Gets the network path for the specified drive.
+        /// </summary>
+        /// <param name="path">Drive to perform search on.</param>
+        /// <returns></returns>
         public static string GetUNCPath(string path)
         {
             if (path.StartsWith(@"\\")) return path;
@@ -513,6 +515,11 @@ namespace WindowsFormsApplication1
             return Convert.ToString(mo["ProviderName"]);
         }
 
+        /// <summary>
+        /// Check if specified directory is empty.
+        /// </summary>
+        /// <param name="path">Path to check.</param>
+        /// <returns></returns>
         public bool IsDirectoryEmpty(string path)
         {
             return !Directory.EnumerateFileSystemEntries(path).Any();
