@@ -245,7 +245,7 @@ namespace WindowsFormsApplication1
             // Check if source drive is ready and exists
             DriveInfo dInfo = new DriveInfo(srcDir.Substring(0, 2));
             if (!dInfo.IsReady || !Directory.Exists(dInfo.Name))
-                throw new Exception("Source drive is not ready. Please try again.-resetTreeView");
+                throw new Exception("Source drive is not ready. Please try again.");
 
             // Check if source folder is empty.  Exit if true
             if (IsDirectoryEmpty(srcDir))
