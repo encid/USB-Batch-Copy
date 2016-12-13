@@ -69,7 +69,7 @@ namespace WindowsFormsApplication1
                 if (e.X > 16) lvi.Checked = !lvi.Checked;
             };
 
-            // Add columns to ListView
+            // Add columns to the ListView
             lvDrives.Columns.Add("Drive", -2, HorizontalAlignment.Left);
             lvDrives.Columns.Add("Volume name", -2, HorizontalAlignment.Left);
             lvDrives.Columns.Add("File system", -2, HorizontalAlignment.Left);
