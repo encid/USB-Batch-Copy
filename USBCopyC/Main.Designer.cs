@@ -46,7 +46,7 @@
             this.lblStatus = new System.Windows.Forms.Label();
             this.PictureBox1 = new System.Windows.Forms.PictureBox();
             this.tmrRefresh = new System.Windows.Forms.Timer(this.components);
-            this.backgroundWorker1 = new System.ComponentModel.BackgroundWorker();
+            this.bw = new System.ComponentModel.BackgroundWorker();
             Label3 = new System.Windows.Forms.Label();
             this.groupBox1.SuspendLayout();
             this.groupBox2.SuspendLayout();
@@ -253,11 +253,13 @@
             this.tmrRefresh.Enabled = true;
             this.tmrRefresh.Tick += new System.EventHandler(this.tmrRefresh_Tick);
             // 
-            // backgroundWorker1
+            // bw
             // 
-            this.backgroundWorker1.WorkerSupportsCancellation = true;
-            this.backgroundWorker1.DoWork += new System.ComponentModel.DoWorkEventHandler(this.backgroundWorker1_DoWork);
-            this.backgroundWorker1.RunWorkerCompleted += new System.ComponentModel.RunWorkerCompletedEventHandler(this.backgroundWorker1_RunWorkerCompleted);
+            this.bw.WorkerReportsProgress = true;
+            this.bw.WorkerSupportsCancellation = true;
+            this.bw.DoWork += new System.ComponentModel.DoWorkEventHandler(this.bw_DoWork);
+            this.bw.RunWorkerCompleted += new System.ComponentModel.RunWorkerCompletedEventHandler(this.bw_RunWorkerCompleted);
+            this.bw.ProgressChanged += new System.ComponentModel.ProgressChangedEventHandler(bw_ProgressChanged);
             // 
             // Main
             // 
@@ -302,7 +304,7 @@
         internal System.Windows.Forms.Label lblStatus;
         internal System.Windows.Forms.PictureBox PictureBox1;
         private System.Windows.Forms.Timer tmrRefresh;
-        private System.ComponentModel.BackgroundWorker backgroundWorker1;
+        private System.ComponentModel.BackgroundWorker bw;
         private System.Windows.Forms.TreeView dirsTreeView;
         private System.Windows.Forms.ImageList imageList1;
         private System.Windows.Forms.ListView lvDrives;

@@ -39,6 +39,26 @@ namespace WindowsFormsApplication1
               PARENTRELATIVE = 0x80080001
           }*/
 
+        private struct CopyParams {
+            public readonly string SourceDir;
+            public readonly List<string> DestDirs;
+            public CopyParams(string source, List<string> destinations)
+            {
+                SourceDir = source;
+                DestDirs = destinations;
+            }
+        }
+
+        private struct ProgressParams {
+            public int CurrentDrive;
+            public readonly int TotalDrives;
+            public ProgressParams(int currentDrive, int totalDrives)
+            {
+                CurrentDrive = currentDrive;
+                TotalDrives = totalDrives;
+            }
+        }
+
         public Main()
         {
             InitializeComponent();
@@ -87,16 +107,7 @@ namespace WindowsFormsApplication1
             BeginInvoke((Action)delegate {
                 a();
             });
-        }
-
-        private struct CopyParams {
-            public readonly string SourceDir;
-            public readonly List<string> DestDirs;
-            public CopyParams(string source, List<string> destinations) {
-                SourceDir = source;
-                DestDirs = destinations;
-            }
-        }
+        }        
 
         private List<string> GetDestinationDirs(ListView lview)
         {
@@ -286,7 +297,7 @@ namespace WindowsFormsApplication1
                 lblStatus.ForeColor = Color.Black;
 
                 // Begin the copy in BackgroundWorker, pass CopyParams object into it
-                backgroundWorker1.RunWorkerAsync(cp);
+                bw.RunWorkerAsync(cp);
             }            
             catch (Exception ex) {
                 MessageBox.Show("Error:  " + ex.Message, "USB Batch Copy", MessageBoxButtons.OK, MessageBoxIcon.Error);
@@ -296,7 +307,7 @@ namespace WindowsFormsApplication1
                     PopulateListView(lvDrives);
             }
         }
-                
+        
         private void tmrRefresh_Tick(object sender, EventArgs e)
         {
             lblSelectedDrives.Text = string.Format("Drives Selected: {0}", lvDrives.CheckedItems.Count);
@@ -312,7 +323,7 @@ namespace WindowsFormsApplication1
             }            
         }
 
-        private void backgroundWorker1_DoWork(object sender, System.ComponentModel.DoWorkEventArgs e)
+        private void bw_DoWork(object sender, System.ComponentModel.DoWorkEventArgs e)
         {
             CopyParams cp = (CopyParams)e.Argument;
 
@@ -326,17 +337,27 @@ namespace WindowsFormsApplication1
             }
         }
 
+        private void bw_ProgressChanged(object sender, System.ComponentModel.ProgressChangedEventArgs e)
+        {
+            ProgressParams pp = (ProgressParams)e.UserState;
+
+            lblStatus.Text = String.Format("Copying drive {0} of {1}..", pp.CurrentDrive, pp.TotalDrives);
+        }
+
         private void PerformCopy(string srcDir, List<string> destDirs)
         {
+            ProgressParams pp = new ProgressParams(1, destDirs.Count);
+
             // Start copy execution
             for (int i = 0; i < destDirs.Count; i++) {
-                ExecuteSecure(() => lblStatus.Text = string.Format("Copying drive {0} of {1}..", (i + 1), destDirs.Count));  // Update status label securely
+                pp.CurrentDrive++;
+                bw.ReportProgress(i, pp);
                 string destDir = destDirs[i];
                 FileSystem.CopyDirectory(srcDir, destDir, UIOption.AllDialogs, UICancelOption.ThrowException);
             }            
         }
 
-        private void backgroundWorker1_RunWorkerCompleted(object sender, System.ComponentModel.RunWorkerCompletedEventArgs e)
+        private void bw_RunWorkerCompleted(object sender, System.ComponentModel.RunWorkerCompletedEventArgs e)
         {                        
             if (e.Cancelled) {   
                 // The user cancelled the operation.                
