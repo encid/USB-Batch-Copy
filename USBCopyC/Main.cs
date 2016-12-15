@@ -321,7 +321,7 @@ namespace WindowsFormsApplication1
         {
             ProgressParams pp = (ProgressParams)e.UserState;
 
-            lblStatus.Text = String.Format("Copying drive {0} of {1}..", pp.CurrentDrive, pp.TotalDrives);
+            lblStatus.Text = string.Format("Copying drive {0} of {1}..", pp.CurrentDrive, pp.TotalDrives);
         }
 
         private void PerformCopy(string srcDir, List<string> destDirs)
@@ -434,8 +434,7 @@ namespace WindowsFormsApplication1
                         string fullUNC = GetUNCPath(di.Name.Substring(0, 2));
                         int lastSlash  = fullUNC.LastIndexOf(@"\") + 1;
                         string netPath = fullUNC.Substring(0, lastSlash - 1);
-                        drvLabel       = fullUNC.Substring(lastSlash, fullUNC.Length - lastSlash);                        
-                        drvLabel       = drvLabel + " (" + netPath + ")";
+                        drvLabel       = string.Format("{0} ({1})", fullUNC.Substring(lastSlash, fullUNC.Length - lastSlash), netPath);
                         driveImage     = 6;
                         break;
                     case DriveType.NoRootDirectory:
@@ -447,13 +446,13 @@ namespace WindowsFormsApplication1
                     default:
                         driveImage = 2;
                         break;
-                }                
+                }
 
                 // If drive label exists, add a space after it
                 if (!string.IsNullOrEmpty(drvLabel))
-                    drvLabel = drvLabel + " ";
+                    drvLabel = drvLabel.PadRight(drvLabel.Length + 1);
                                               
-                TreeNode node = new TreeNode(drvLabel + "(" + di.Name.Substring(0, 2) + ")", driveImage, driveImage);
+                TreeNode node = new TreeNode(string.Format("{0}({1})", drvLabel, di.Name.Substring(0, 2)), driveImage, driveImage);
                 
                 node.Tag = drive;
 
