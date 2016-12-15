@@ -40,7 +40,8 @@
             this.lvDrives = new System.Windows.Forms.ListView();
             this.Label1 = new System.Windows.Forms.Label();
             this.groupBox2 = new System.Windows.Forms.GroupBox();
-            this.dirsTreeView = new System.Windows.Forms.TreeView();
+            this.btnBrowse = new System.Windows.Forms.Button();
+            this.txtSourceDir = new System.Windows.Forms.TextBox();
             this.imageList1 = new System.Windows.Forms.ImageList(this.components);
             this.groupBox3 = new System.Windows.Forms.GroupBox();
             this.lblStatus = new System.Windows.Forms.Label();
@@ -67,7 +68,7 @@
             // btnSelectAll
             // 
             this.btnSelectAll.Font = new System.Drawing.Font("Arial", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.btnSelectAll.Location = new System.Drawing.Point(12, 220);
+            this.btnSelectAll.Location = new System.Drawing.Point(11, 205);
             this.btnSelectAll.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
             this.btnSelectAll.Name = "btnSelectAll";
             this.btnSelectAll.Size = new System.Drawing.Size(96, 25);
@@ -79,7 +80,7 @@
             // btnSelectNone
             // 
             this.btnSelectNone.Font = new System.Drawing.Font("Arial", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.btnSelectNone.Location = new System.Drawing.Point(114, 220);
+            this.btnSelectNone.Location = new System.Drawing.Point(113, 205);
             this.btnSelectNone.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
             this.btnSelectNone.Name = "btnSelectNone";
             this.btnSelectNone.Size = new System.Drawing.Size(96, 25);
@@ -91,7 +92,7 @@
             // btnRefreshDrives
             // 
             this.btnRefreshDrives.Font = new System.Drawing.Font("Arial", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.btnRefreshDrives.Location = new System.Drawing.Point(410, 220);
+            this.btnRefreshDrives.Location = new System.Drawing.Point(433, 205);
             this.btnRefreshDrives.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
             this.btnRefreshDrives.Name = "btnRefreshDrives";
             this.btnRefreshDrives.Size = new System.Drawing.Size(96, 25);
@@ -116,7 +117,7 @@
             // 
             this.lblSelectedDrives.AutoSize = true;
             this.lblSelectedDrives.Font = new System.Drawing.Font("Arial", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.lblSelectedDrives.Location = new System.Drawing.Point(226, 224);
+            this.lblSelectedDrives.Location = new System.Drawing.Point(265, 210);
             this.lblSelectedDrives.Name = "lblSelectedDrives";
             this.lblSelectedDrives.Size = new System.Drawing.Size(106, 15);
             this.lblSelectedDrives.TabIndex = 7;
@@ -131,12 +132,12 @@
             this.groupBox1.Controls.Add(this.lvDrives);
             this.groupBox1.Controls.Add(this.btnSelectAll);
             this.groupBox1.Font = new System.Drawing.Font("Arial", 9.75F, ((System.Drawing.FontStyle)((System.Drawing.FontStyle.Bold | System.Drawing.FontStyle.Italic))), System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.groupBox1.Location = new System.Drawing.Point(467, 57);
+            this.groupBox1.Location = new System.Drawing.Point(12, 48);
             this.groupBox1.Name = "groupBox1";
-            this.groupBox1.Size = new System.Drawing.Size(516, 256);
+            this.groupBox1.Size = new System.Drawing.Size(541, 240);
             this.groupBox1.TabIndex = 10;
             this.groupBox1.TabStop = false;
-            this.groupBox1.Text = "Step 2: Select the USB drive(s) to be processed";
+            this.groupBox1.Text = "Step 1: Select the USB drive(s) to be processed";
             // 
             // lvDrives
             // 
@@ -148,7 +149,7 @@
             this.lvDrives.MultiSelect = false;
             this.lvDrives.Name = "lvDrives";
             this.lvDrives.ShowGroups = false;
-            this.lvDrives.Size = new System.Drawing.Size(493, 192);
+            this.lvDrives.Size = new System.Drawing.Size(517, 177);
             this.lvDrives.TabIndex = 2;
             this.lvDrives.UseCompatibleStateImageBehavior = false;
             this.lvDrives.View = System.Windows.Forms.View.Details;
@@ -165,32 +166,36 @@
             // 
             // groupBox2
             // 
-            this.groupBox2.Controls.Add(this.dirsTreeView);
+            this.groupBox2.Controls.Add(this.btnBrowse);
+            this.groupBox2.Controls.Add(this.txtSourceDir);
             this.groupBox2.Font = new System.Drawing.Font("Arial", 9.75F, ((System.Drawing.FontStyle)((System.Drawing.FontStyle.Bold | System.Drawing.FontStyle.Italic))), System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.groupBox2.Location = new System.Drawing.Point(11, 57);
+            this.groupBox2.Location = new System.Drawing.Point(12, 294);
             this.groupBox2.Name = "groupBox2";
-            this.groupBox2.Size = new System.Drawing.Size(450, 334);
+            this.groupBox2.Size = new System.Drawing.Size(541, 56);
             this.groupBox2.TabIndex = 27;
             this.groupBox2.TabStop = false;
-            this.groupBox2.Text = "Step 1: Select the source folder to copy to USB drive(s)";
+            this.groupBox2.Text = "Step 2: Select the source folder to copy to USB drive(s)";
             // 
-            // dirsTreeView
+            // btnBrowse
             // 
-            this.dirsTreeView.DrawMode = System.Windows.Forms.TreeViewDrawMode.OwnerDrawText;
-            this.dirsTreeView.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.dirsTreeView.ForeColor = System.Drawing.SystemColors.ControlText;
-            this.dirsTreeView.HideSelection = false;
-            this.dirsTreeView.ImageIndex = 0;
-            this.dirsTreeView.ImageList = this.imageList1;
-            this.dirsTreeView.Indent = 16;
-            this.dirsTreeView.ItemHeight = 18;
-            this.dirsTreeView.Location = new System.Drawing.Point(12, 21);
-            this.dirsTreeView.Name = "dirsTreeView";
-            this.dirsTreeView.SelectedImageIndex = 0;
-            this.dirsTreeView.Size = new System.Drawing.Size(426, 305);
-            this.dirsTreeView.StateImageList = this.imageList1;
-            this.dirsTreeView.TabIndex = 1;
-            this.dirsTreeView.TabStop = false;
+            this.btnBrowse.Font = new System.Drawing.Font("Arial", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.btnBrowse.Location = new System.Drawing.Point(503, 21);
+            this.btnBrowse.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
+            this.btnBrowse.Name = "btnBrowse";
+            this.btnBrowse.Size = new System.Drawing.Size(26, 23);
+            this.btnBrowse.TabIndex = 4;
+            this.btnBrowse.Text = "►";
+            this.btnBrowse.UseVisualStyleBackColor = true;
+            this.btnBrowse.Click += new System.EventHandler(this.btnBrowse_Click);
+            // 
+            // txtSourceDir
+            // 
+            this.txtSourceDir.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.txtSourceDir.Location = new System.Drawing.Point(12, 21);
+            this.txtSourceDir.Name = "txtSourceDir";
+            this.txtSourceDir.Size = new System.Drawing.Size(485, 23);
+            this.txtSourceDir.TabIndex = 0;
+            this.txtSourceDir.Text = " <Select a source folder>";
             // 
             // imageList1
             // 
@@ -217,9 +222,9 @@
             this.groupBox3.Controls.Add(this.PictureBox1);
             this.groupBox3.Controls.Add(this.btnStartCopy);
             this.groupBox3.Font = new System.Drawing.Font("Arial", 9.75F, ((System.Drawing.FontStyle)((System.Drawing.FontStyle.Bold | System.Drawing.FontStyle.Italic))), System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.groupBox3.Location = new System.Drawing.Point(467, 326);
+            this.groupBox3.Location = new System.Drawing.Point(12, 356);
             this.groupBox3.Name = "groupBox3";
-            this.groupBox3.Size = new System.Drawing.Size(516, 65);
+            this.groupBox3.Size = new System.Drawing.Size(541, 65);
             this.groupBox3.TabIndex = 28;
             this.groupBox3.TabStop = false;
             this.groupBox3.Text = "Step 3: Click the \'Start Copy\' button to begin";
@@ -240,7 +245,7 @@
             // PictureBox1
             // 
             this.PictureBox1.Image = global::WindowsFormsApplication1.Properties.Resources.checkmarkgreen;
-            this.PictureBox1.Location = new System.Drawing.Point(464, 15);
+            this.PictureBox1.Location = new System.Drawing.Point(488, 12);
             this.PictureBox1.Name = "PictureBox1";
             this.PictureBox1.Size = new System.Drawing.Size(41, 40);
             this.PictureBox1.SizeMode = System.Windows.Forms.PictureBoxSizeMode.StretchImage;
@@ -258,15 +263,15 @@
             this.bw.WorkerReportsProgress = true;
             this.bw.WorkerSupportsCancellation = true;
             this.bw.DoWork += new System.ComponentModel.DoWorkEventHandler(this.bw_DoWork);
+            this.bw.ProgressChanged += new System.ComponentModel.ProgressChangedEventHandler(this.bw_ProgressChanged);
             this.bw.RunWorkerCompleted += new System.ComponentModel.RunWorkerCompletedEventHandler(this.bw_RunWorkerCompleted);
-            this.bw.ProgressChanged += new System.ComponentModel.ProgressChangedEventHandler(bw_ProgressChanged);
             // 
             // Main
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(224)))), ((int)(((byte)(224)))), ((int)(((byte)(224)))));
-            this.ClientSize = new System.Drawing.Size(993, 401);
+            this.ClientSize = new System.Drawing.Size(566, 435);
             this.Controls.Add(this.groupBox3);
             this.Controls.Add(this.groupBox2);
             this.Controls.Add(this.Label1);
@@ -283,6 +288,7 @@
             this.groupBox1.ResumeLayout(false);
             this.groupBox1.PerformLayout();
             this.groupBox2.ResumeLayout(false);
+            this.groupBox2.PerformLayout();
             this.groupBox3.ResumeLayout(false);
             this.groupBox3.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)(this.PictureBox1)).EndInit();
@@ -305,9 +311,10 @@
         internal System.Windows.Forms.PictureBox PictureBox1;
         private System.Windows.Forms.Timer tmrRefresh;
         private System.ComponentModel.BackgroundWorker bw;
-        private System.Windows.Forms.TreeView dirsTreeView;
         private System.Windows.Forms.ImageList imageList1;
         private System.Windows.Forms.ListView lvDrives;
+        private System.Windows.Forms.Button btnBrowse;
+        private System.Windows.Forms.TextBox txtSourceDir;
     }
 }
 

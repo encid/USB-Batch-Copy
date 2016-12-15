@@ -17,7 +17,8 @@ using System.Management;
 namespace WindowsFormsApplication1
 {
     public partial class Main : Form {
-        int currDriveCount;        
+        int currDriveCount;
+        FolderBrowserDialog fbd;       
 
         private struct CopyParams {
             public readonly string SourceDir;
@@ -43,24 +44,9 @@ namespace WindowsFormsApplication1
         {
             InitializeComponent();
             PopulateListView(lvDrives);  // Add (destination) removable drives to ListView
-            PopulateTreeView(dirsTreeView);  // Add (source) drives to TreeView
-
-            // Keep selected node highlighted if TreeView control loses focus            
-            dirsTreeView.BeforeExpand += new TreeViewCancelEventHandler(this.dirsTreeView_BeforeExpand);
-            dirsTreeView.DrawNode += (o, e) => {
-                if (!e.Node.TreeView.Focused && e.Node == e.Node.TreeView.SelectedNode) {
-                    Font treeFont = e.Node.NodeFont ?? e.Node.TreeView.Font;
-                    e.Graphics.FillRectangle(SystemBrushes.Highlight, e.Bounds);
-                    ControlPaint.DrawFocusRectangle(e.Graphics, e.Bounds, SystemColors.HighlightText, SystemColors.Highlight);
-                    TextRenderer.DrawText(e.Graphics, e.Node.Text, treeFont, e.Bounds, SystemColors.HighlightText, TextFormatFlags.GlyphOverhangPadding);
-                }
-                else
-                    e.DrawDefault = true;
-            };
-            dirsTreeView.MouseDown += (o, e) => {
-                TreeNode node = dirsTreeView.GetNodeAt(e.X, e.Y);
-                if (node != null && node.Bounds.Contains(e.X, e.Y))
-                    dirsTreeView.SelectedNode = node;
+            
+            txtSourceDir.Enter += (o, e) => {                
+                ExecuteSecure(() => txtSourceDir.SelectAll());  // Kick off SelectAll asynchronously so that it occurs after Click
             };
 
             // Tick the checkbox if any part of the item line in ListView is clicked
@@ -75,6 +61,11 @@ namespace WindowsFormsApplication1
             lvDrives.Columns.Add("File system", -2, HorizontalAlignment.Left);
             lvDrives.Columns.Add("Free space", -2, HorizontalAlignment.Left);
             lvDrives.Columns.Add("Capacity", -2, HorizontalAlignment.Left);
+
+            fbd = new FolderBrowserDialog {
+                ShowNewFolderButton = false,
+                Description = "Select the source folder to copy files from.\nIf copying software, you should select the 'ECL' folder of the software p/n."                
+            };
         }
 
         /// <summary>
@@ -98,26 +89,6 @@ namespace WindowsFormsApplication1
             }
             
             return d;
-        }
-
-        /// <summary>
-        /// Format a long number into a readable string; i.e. input: 15520 output: "15.52 KB"
-        /// </summary>
-        /// <param name="bytes">Number of bytes.</param>
-        /// <returns></returns>
-        private string FormatBytes(long bytes)
-        // Format a long number into a readable string; 15520 -> "15.52 KB"
-        {
-            const int scale = 1024;
-            string[] orders = new string[] { "GB", "MB", "KB", "Bytes" };
-            long max = (long)Math.Pow(scale, orders.Length - 1);
-
-            foreach (string order in orders) {
-                if (bytes > max)
-                    return string.Format("{0:##.#} {1}", decimal.Divide(bytes, max), order);
-                max /= scale;
-            }
-            return "0 Bytes";
         }
 
         /// <summary>
@@ -222,6 +193,15 @@ namespace WindowsFormsApplication1
             PopulateListView(lvDrives);
         }
 
+        private void btnBrowse_Click(object sender, EventArgs e)
+        {
+            if (fbd.SelectedPath == "") { fbd.SelectedPath = @"V:\Released_Part_Information\"; }
+
+            if (fbd.ShowDialog() == DialogResult.OK) {
+                txtSourceDir.Text = fbd.SelectedPath;
+            }
+        }
+
         /// <summary>
         /// Validates the UI input parameters for copying, and throws exceptions based on parameters.
         /// </summary>
@@ -230,12 +210,12 @@ namespace WindowsFormsApplication1
         private void ValidateCopyParams(string srcDir, List<string> destDirs)
         {
             // Check to make sure user has selected a source folder.
-            if (srcDir == "")
-                throw new Exception("Please select a valid source folder.");
+            if (!Directory.Exists(srcDir))
+                throw new Exception("Please select a valid source folder and try again.");
             
             // Check if source drive is ready and exists
             DriveInfo dInfo = new DriveInfo(srcDir.Substring(0, 2));
-            if (!dInfo.IsReady || !Directory.Exists(dInfo.Name))
+            if (!dInfo.IsReady)
                 throw new Exception("Source drive is not ready. Please try again.");
 
             // Check if source folder is empty.  Exit if true
@@ -244,7 +224,7 @@ namespace WindowsFormsApplication1
 
             // If no drives are checked in CheckedListBox, exit method 
             if (destDirs.Count == 0)
-                throw new Exception("Please select at least one destination drive.");
+                throw new Exception("Please select at least one destination drive and try again.");
 
             // Check to make sure source drive and destination drive are not the same, exit if true
             // Check to make sure user did not remove drive after refresh, but before copy
@@ -258,13 +238,7 @@ namespace WindowsFormsApplication1
 
         private void btnStartCopy_Click(object sender, EventArgs e)
         {
-            string srcDir = "";
-            TreeNode aNode = dirsTreeView.SelectedNode;
-            
-            if (aNode != null)
-                srcDir = (string)aNode.Tag;
-
-            CopyParams cp = new CopyParams(srcDir, GetDestinationDirs(lvDrives));
+            CopyParams cp = new CopyParams(txtSourceDir.Text, GetDestinationDirs(lvDrives));
 
             try {
                 // Validate user input on UI
@@ -281,8 +255,6 @@ namespace WindowsFormsApplication1
             }            
             catch (Exception ex) {
                 MessageBox.Show("Error:  " + ex.Message, "USB Batch Copy", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                if (ex.Message.Contains("Please select a valid source folder"))
-                    PopulateTreeView(dirsTreeView);                
                 if (ex.Message.Contains("Target destination drive does not exist"))
                     PopulateListView(lvDrives);
             }
@@ -326,7 +298,7 @@ namespace WindowsFormsApplication1
 
         private void PerformCopy(string srcDir, List<string> destDirs)
         {
-            ProgressParams pp = new ProgressParams(1, destDirs.Count);
+            ProgressParams pp = new ProgressParams(0, destDirs.Count);
 
             // Start copy execution
             for (int i = 0; i < destDirs.Count; i++) {
@@ -380,7 +352,8 @@ namespace WindowsFormsApplication1
             btnSelectAll.Enabled = true;
             btnSelectNone.Enabled = true;
             lvDrives.Enabled = true;
-            dirsTreeView.Enabled = true;
+            btnBrowse.Enabled = true;
+            txtSourceDir.Enabled = true;
             tmrRefresh.Enabled = true;
         }
 
@@ -392,113 +365,9 @@ namespace WindowsFormsApplication1
             btnSelectAll.Enabled = false;
             btnSelectNone.Enabled = false;
             lvDrives.Enabled = false;
-            dirsTreeView.Enabled = false;
+            btnBrowse.Enabled = false;
+            txtSourceDir.Enabled = false;
             tmrRefresh.Enabled = false;
-        }
-
-        /// <summary>
-        /// Populates a TreeView control with all logical drives.
-        /// </summary>
-        /// <param name="treeView">Specifies the TreeView control to populate.</param>
-        private void PopulateTreeView(TreeView treeViewName)
-        {
-            // Clear the TreeView of nodes
-            treeViewName.Nodes.Clear();
-
-            // Get a list of the drives
-            string[] drives = Environment.GetLogicalDrives();
-            
-            // Iterate through drives to set icons and labels
-            foreach (string drive in drives) {
-                DriveInfo di    = new DriveInfo(drive);
-                string drvLabel = string.Empty;
-                int driveImage;
-
-                // Set drive's icon and label based on drive type
-                switch (di.DriveType) {
-                    case DriveType.Fixed:
-                        driveImage = 2;
-                        if (di.VolumeLabel == string.Empty)
-                            drvLabel = "Local Disk";
-                        else drvLabel = di.VolumeLabel;
-                        break;
-                    case DriveType.CDRom:
-                        driveImage = 3;
-                        drvLabel   = "CD_ROM";
-                        break;
-                    case DriveType.Removable:
-                        driveImage = 5;
-                        drvLabel   = "Removable Disk";
-                        break;
-                    case DriveType.Network:
-                        string fullUNC = GetUNCPath(di.Name.Substring(0, 2));
-                        int lastSlash  = fullUNC.LastIndexOf(@"\") + 1;
-                        string netPath = fullUNC.Substring(0, lastSlash - 1);
-                        drvLabel       = string.Format("{0} ({1})", fullUNC.Substring(lastSlash, fullUNC.Length - lastSlash), netPath);
-                        driveImage     = 6;
-                        break;
-                    case DriveType.NoRootDirectory:
-                        driveImage = 8;
-                        break;
-                    case DriveType.Unknown:
-                        driveImage = 8;
-                        break;
-                    default:
-                        driveImage = 2;
-                        break;
-                }
-
-                // If drive label exists, add a space after it
-                if (!string.IsNullOrEmpty(drvLabel))
-                    drvLabel = drvLabel.PadRight(drvLabel.Length + 1);
-                                              
-                TreeNode node = new TreeNode(string.Format("{0}({1})", drvLabel, di.Name.Substring(0, 2)), driveImage, driveImage);
-                
-                node.Tag = drive;
-
-                if (di.IsReady)
-                    node.Nodes.Add("...");
-
-                treeViewName.Nodes.Add(node);
-            }         
-        }
-
-        private void dirsTreeView_BeforeExpand(object sender, TreeViewCancelEventArgs e)
-        {
-            if (e.Node.Nodes.Count > 0) {
-                if (e.Node.Nodes[0].Text == "..." && e.Node.Nodes[0].Tag == null) {
-                    e.Node.Nodes.Clear();
-
-                    //get the list of sub direcotires
-                    //IEnumerable<string> dirs = Directory.EnumerateDirectories((string)e.Node.Tag);
-                    List<string> dirs = new List<string>(Directory.GetDirectories((string)e.Node.Tag));
-
-                    foreach (string dir in dirs) {
-                        var di = new DirectoryInfo(dir);
-                        var node = new TreeNode(di.Name, 0, 1);
-
-                        try {
-                            node.Tag = dir;  //keep the directory's full path in the tag for use later
-
-                            //if the directory has any sub directories add the place holder
-                            if (di.GetDirectories().Count() > 0)
-                                node.Nodes.Add(null, "...", 0, 0);
-                        }
-                        catch (UnauthorizedAccessException) {
-                            //if an unauthorized access exception occured display a locked folder
-                            node.ImageIndex = 12;
-                            node.SelectedImageIndex = 12;
-                        }
-                        catch (Exception ex) {
-                            MessageBox.Show(ex.Message, "USB Batch Copy", MessageBoxButtons.OK,
-                                MessageBoxIcon.Error);
-                        }
-                        finally {
-                            e.Node.Nodes.Add(node);
-                        }
-                    }
-                }
-            }
         }
 
         /// <summary>
@@ -523,6 +392,6 @@ namespace WindowsFormsApplication1
         public bool IsDirectoryEmpty(string path)
         {
             return !Directory.EnumerateFileSystemEntries(path).Any();
-        }
+        }        
     }
 }
