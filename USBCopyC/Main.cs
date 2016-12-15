@@ -17,27 +17,7 @@ using System.Management;
 namespace WindowsFormsApplication1
 {
     public partial class Main : Form {
-        //const string SHELL = "shell32.dll";
-        int currDriveCount;
-
-        //[DllImport(SHELL, CharSet = CharSet.Unicode)]
-        //private static extern uint SHParseDisplayName(string pszName, IntPtr zero, [Out] out IntPtr ppidl, uint sfgaoIn, [Out] out uint psfgaoOut);
-
-        //[DllImport(SHELL, CharSet = CharSet.Unicode)]
-        //private static extern uint SHGetNameFromIDList(IntPtr pidl, SIGDN sigdnName, [Out] out String ppszName);
-
-        /*public enum SIGDN : uint
-          {
-              NORMALDISPLAY = 0x00000000,
-              PARENTRELATIVEPARSING = 0x80018001,
-              DESKTOPABSOLUTEPARSING = 0x80028000,
-              PARENTRELATIVEEDITING = 0x80031001,
-              DESKTOPABSOLUTEEDITING = 0x8004c000,
-              FILESYSPATH = 0x80058000,
-              URL = 0x80068000,
-              PARENTRELATIVEFORADDRESSBAR = 0x8007c001,
-              PARENTRELATIVE = 0x80080001
-          }*/
+        int currDriveCount;        
 
         private struct CopyParams {
             public readonly string SourceDir;
@@ -545,19 +525,5 @@ namespace WindowsFormsApplication1
         {
             return !Directory.EnumerateFileSystemEntries(path).Any();
         }
-
-        /*public string GetDriveLabels(string driveNameAsLetterColonBackslash)
-        {
-            IntPtr pidl;
-            uint dummy;
-            string name;
-            if (SHParseDisplayName(driveNameAsLetterColonBackslash, IntPtr.Zero, out pidl, 0, out dummy) == 0
-                && SHGetNameFromIDList(pidl, SIGDN.PARENTRELATIVEEDITING, out name) == 0
-                && name != null)
-            {
-                return name;
-            }
-            return null;
-        }*/
     }
 }
