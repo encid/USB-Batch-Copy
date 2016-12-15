@@ -48,6 +48,7 @@
             this.PictureBox1 = new System.Windows.Forms.PictureBox();
             this.tmrRefresh = new System.Windows.Forms.Timer(this.components);
             this.bw = new System.ComponentModel.BackgroundWorker();
+            this.rt = new System.Windows.Forms.RichTextBox();
             Label3 = new System.Windows.Forms.Label();
             this.groupBox1.SuspendLayout();
             this.groupBox2.SuspendLayout();
@@ -266,12 +267,24 @@
             this.bw.ProgressChanged += new System.ComponentModel.ProgressChangedEventHandler(this.bw_ProgressChanged);
             this.bw.RunWorkerCompleted += new System.ComponentModel.RunWorkerCompletedEventHandler(this.bw_RunWorkerCompleted);
             // 
+            // rt
+            // 
+            this.rt.Font = new System.Drawing.Font("Courier New", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.rt.Location = new System.Drawing.Point(12, 437);
+            this.rt.Name = "rt";
+            this.rt.ReadOnly = true;
+            this.rt.Size = new System.Drawing.Size(541, 174);
+            this.rt.TabIndex = 29;
+            this.rt.Text = "";
+            this.rt.WordWrap = false;
+            // 
             // Main
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(224)))), ((int)(((byte)(224)))), ((int)(((byte)(224)))));
-            this.ClientSize = new System.Drawing.Size(566, 435);
+            this.ClientSize = new System.Drawing.Size(566, 623);
+            this.Controls.Add(this.rt);
             this.Controls.Add(this.groupBox3);
             this.Controls.Add(this.groupBox2);
             this.Controls.Add(this.Label1);
@@ -315,6 +328,7 @@
         private System.Windows.Forms.ListView lvDrives;
         private System.Windows.Forms.Button btnBrowse;
         private System.Windows.Forms.TextBox txtSourceDir;
+        private System.Windows.Forms.RichTextBox rt;
     }
 }
 

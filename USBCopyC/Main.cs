@@ -66,6 +66,14 @@ namespace WindowsFormsApplication1
                 ShowNewFolderButton = false,
                 Description = "Select the source folder to copy files from.\nIf copying software, you should select the 'ECL' folder of the software p/n."                
             };
+
+            //Make sure textbox stays at the most recent line(bottom most)
+            rt.TextChanged += (sender, e) => {
+                if (rt.Visible) {
+                    //rt.SelectionStart = rt.TextLength;
+                    rt.ScrollToCaret();
+                }
+            };
         }
 
         /// <summary>
@@ -78,7 +86,20 @@ namespace WindowsFormsApplication1
             BeginInvoke((Action)delegate {
                 a();
             });
-        }        
+        }
+
+        /// <summary>
+        /// Write a message to the status log textbox.
+        /// </summary>
+        /// <param name="message">Message to write to the status log.</param>
+        private void Log(string message)
+        {
+            string time = DateTime.Now.ToString("h:mm:sstt");
+
+            string msg = string.Format("{0}: {1}\n", time, message);
+                        
+            rt.AppendText(msg);
+        }
 
         private List<string> GetDestinationDirs(ListView lview)
         {
@@ -179,6 +200,9 @@ namespace WindowsFormsApplication1
         // Sets check state for all listed drives to true.
         {
             SetListViewCheckState(lvDrives, true);
+
+            Log("Data programmed at the following positions:");
+
         }
 
         private void btnSelectNone_Click(object sender, EventArgs e)
