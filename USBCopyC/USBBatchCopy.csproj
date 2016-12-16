@@ -48,7 +48,7 @@
     <CodeAnalysisIgnoreGeneratedCode>false</CodeAnalysisIgnoreGeneratedCode>
   </PropertyGroup>
   <PropertyGroup>
-    <ApplicationIcon>usb_icon_Olz_icon.ico</ApplicationIcon>
+    <ApplicationIcon>Resources\usb_icon_Olz_icon.ico</ApplicationIcon>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|x86'">
     <PlatformTarget>x86</PlatformTarget>
@@ -111,7 +111,7 @@
     <None Include="Resources\checkmarkgreen.png" />
   </ItemGroup>
   <ItemGroup>
-    <Content Include="usb_icon_Olz_icon.ico" />
+    <Content Include="Resources\usb_icon_Olz_icon.ico" />
   </ItemGroup>
   <ItemGroup>
     <BootstrapperPackage Include=".NETFramework,Version=v4.0">
