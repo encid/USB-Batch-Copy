@@ -14,7 +14,7 @@ using System.Windows.Forms;
 using System.Configuration;
 using System.Management;
 
-namespace WindowsFormsApplication1
+namespace USBBatchCopy
 {
     public partial class Main : Form {
         int currDriveCount;

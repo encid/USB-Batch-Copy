@@ -1,4 +1,4 @@
-﻿namespace WindowsFormsApplication1
+﻿namespace USBBatchCopy
 {
     partial class Main
     {
@@ -245,7 +245,7 @@
             // 
             // PictureBox1
             // 
-            this.PictureBox1.Image = global::WindowsFormsApplication1.Properties.Resources.checkmarkgreen;
+            this.PictureBox1.Image = global::USBBatchCopy.Properties.Resources.checkmarkgreen;
             this.PictureBox1.Location = new System.Drawing.Point(488, 12);
             this.PictureBox1.Name = "PictureBox1";
             this.PictureBox1.Size = new System.Drawing.Size(41, 40);
