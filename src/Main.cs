@@ -21,22 +21,22 @@ namespace USBBatchCopy
         FolderBrowserDialog fbd;       
 
         private struct CopyParams {
-            public readonly string SourceDir;
-            public readonly List<string> DestDirs;
+            public readonly string _sourceDir;
+            public readonly List<string> _destDirs;
             public CopyParams(string source, List<string> destinations)
             {
-                SourceDir = source;
-                DestDirs = destinations;
+                _sourceDir = source;
+                _destDirs = destinations;
             }
         }
 
         private struct ProgressParams {
-            public int CurrentDrive;
-            public readonly int TotalDrives;
+            public int _currentDrive;
+            public readonly int _totalDrives;
             public ProgressParams(int currentDrive, int totalDrives)
             {
-                CurrentDrive = currentDrive;
-                TotalDrives = totalDrives;
+                _currentDrive = currentDrive;
+                _totalDrives = totalDrives;
             }
         }
 
@@ -86,20 +86,7 @@ namespace USBBatchCopy
             BeginInvoke((Action)delegate {
                 a();
             });
-        }
-
-        /// <summary>
-        /// Write a message to the status log textbox.
-        /// </summary>
-        /// <param name="message">Message to write to the status log.</param>
-        private void Log(string message)
-        {
-            string time = DateTime.Now.ToString("h:mm:sstt");
-
-            string msg = string.Format("{0}: {1}\n", time, message);
-                        
-            rt.AppendText(msg);
-        }
+        }        
 
         private List<string> GetDestinationDirs(ListView lview)
         {
@@ -201,7 +188,7 @@ namespace USBBatchCopy
         {
             SetListViewCheckState(lvDrives, true);
 
-            Log("Data programmed at the following positions:");
+            Logger.Log("Data programmed at the following positions:", rt);
 
         }
 
@@ -266,7 +253,7 @@ namespace USBBatchCopy
 
             try {
                 // Validate user input on UI
-                ValidateCopyParams(cp.SourceDir, cp.DestDirs);
+                ValidateCopyParams(cp._sourceDir, cp._destDirs);
 
                 // No exceptions, so continue....
                 // Disable UI controls and set status
@@ -304,7 +291,7 @@ namespace USBBatchCopy
             CopyParams cp = (CopyParams)e.Argument;
 
             try {                
-                PerformCopy(cp.SourceDir, cp.DestDirs);
+                PerformCopy(cp._sourceDir, cp._destDirs);
             }
             catch (ArgumentException) {  // Catch user removal of drive during copy for RunWorkerCompleted to process
             }
@@ -317,7 +304,7 @@ namespace USBBatchCopy
         {
             ProgressParams pp = (ProgressParams)e.UserState;
 
-            lblStatus.Text = string.Format("Copying drive {0} of {1}..", pp.CurrentDrive, pp.TotalDrives);
+            lblStatus.Text = string.Format("Copying drive {0} of {1}..", pp._currentDrive, pp._totalDrives);
         }
 
         private void PerformCopy(string srcDir, List<string> destDirs)
@@ -326,7 +313,7 @@ namespace USBBatchCopy
 
             // Start copy execution
             for (int i = 0; i < destDirs.Count; i++) {
-                pp.CurrentDrive++;
+                pp._currentDrive++;
                 bw.ReportProgress(i, pp);
                 string destDir = destDirs[i];
                 FileSystem.CopyDirectory(srcDir, destDir, UIOption.AllDialogs, UICancelOption.ThrowException);
