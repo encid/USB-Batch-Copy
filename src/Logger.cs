@@ -1,8 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Drawing;
+using System.IO;
 using System.Linq;
-using System.Text;
 using System.Windows.Forms;
+using System.Configuration;
+using System.Management;
 
 namespace USBBatchCopy 
     {
@@ -13,13 +16,26 @@ namespace USBBatchCopy
         /// </summary>
         /// <param name="message">Message to write to the status log.</param>
         /// <param name="obj">Object to target.</param>
-        public static void Log(string message, RichTextBox obj)
+        public static void Log(string message, RichTextBox box)
         {
-            string time = DateTime.Now.ToString("h:mm:sstt");
+            box.AppendText(Environment.NewLine + message);
+        }
 
-            string msg = string.Format("{0}: {1}\n", time, message);
+        public static void Log(string message, RichTextBox box, Color color)
+        {
+            box.AppendText(Environment.NewLine + message, color);
+        }
+    }
 
-            obj.AppendText(msg);
+    public static partial class RichTextBoxExtensions {
+        public static void AppendText(this RichTextBox box, string text, Color color)
+        {
+            box.SelectionStart = box.TextLength;
+            box.SelectionLength = 0;
+
+            box.SelectionColor = color;
+            box.AppendText(text);
+            box.SelectionColor = box.ForeColor;
         }
     }
 }
