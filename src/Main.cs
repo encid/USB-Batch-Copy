@@ -18,7 +18,8 @@ namespace USBBatchCopy
 {
     public partial class Main : Form {
         int currDriveCount;
-        FolderBrowserDialog fbd;       
+        FolderBrowserDialog fbd;
+        public static Main _Main;
 
         private struct CopyParams {
             public readonly string _sourceDir;
@@ -42,14 +43,16 @@ namespace USBBatchCopy
 
         public Main()
         {
-            InitializeComponent();            
+            InitializeComponent();
+
+            _Main = this; 
 
             PopulateListView(lvDrives);  // Add (destination) removable drives to ListView
 
             currDriveCount = lvDrives.Items.Count;
 
             txtSourceDir.Enter += (o, e) => {                
-                ExecuteSecure(() => txtSourceDir.SelectAll());  // Kick off SelectAll asynchronously so that it occurs after Click
+                ExecuteSecure(txtSourceDir.SelectAll);  // Kick off SelectAll asynchronously so that it occurs after Click
             };
 
             // Tick the checkbox if any part of the item line in ListView is clicked
@@ -86,9 +89,8 @@ namespace USBBatchCopy
         private void ExecuteSecure(Action a)
         // Usage example: ExecuteSecure(() => this.someLabel.Text = "foo");
         {
-            BeginInvoke((Action)delegate {
-                a();
-            });
+            BeginInvoke(a);
+            
         }        
 
         private List<string> GetDestinationDirs(ListView lview)
@@ -121,7 +123,7 @@ namespace USBBatchCopy
         /// <summary>
         /// Set CheckState for all items in a ListView.
         /// </summary>
-        /// <param name="list">ListView to set CheckState on.</param>
+        /// <param name="lview">ListView to set CheckState on.</param>
         /// <param name="choice">Set CheckState; Checked = True and Unchecked = False.</param>
         private void SetListViewCheckState(ListView lview, bool choice)
         // Check or uncheck all items in CheckedListBox, choice = false for uncheck, choice = true for check
@@ -156,7 +158,7 @@ namespace USBBatchCopy
         /// <param name="lview">ListView to populate.</param>
         private void PopulateListView(ListView lview)
         {
-            Logger.Log("Detecting removable drives...", rt);
+            Logger.Log("Scanning for removable drives...", rt);
 
             lview.Items.Clear();
 
@@ -171,7 +173,7 @@ namespace USBBatchCopy
             string driveNames = "";
             // Iterate through collection and add each removable drive as to ListView as items and subitems
             foreach (var drive in drives) {
-                driveNames += drive.Name + " "; 
+                driveNames += drive.Name + ", "; 
                 var freeSpace = BytesToString(drive.TotalFreeSpace);
                 var totalSpace = BytesToString(drive.TotalSize);
 
@@ -192,6 +194,7 @@ namespace USBBatchCopy
             }
 
             // Get count and names of drives found and log it to status
+            driveNames = driveNames.Substring(0, driveNames.Length - 2);
             Logger.Log(string.Format("Detected {0} removable drives: {1}", drives.Count(), driveNames), rt);
 
         }
@@ -262,7 +265,9 @@ namespace USBBatchCopy
 
         private void btnStartCopy_Click(object sender, EventArgs e)
         {
-            CopyParams cp = new CopyParams(txtSourceDir.Text, GetDestinationDirs(lvDrives));                      
+            PictureBox1.Visible = false;
+
+            CopyParams cp = new CopyParams(txtSourceDir.Text, GetDestinationDirs(lvDrives));
 
             try {
                 // Validate user input on UI
@@ -272,14 +277,14 @@ namespace USBBatchCopy
                 // Disable UI controls and set status
                 DisableUI();
                 lblStatus.Text = "Copying...";
-                lblStatus.ForeColor = Color.Black;
                 Logger.Log(string.Format("Starting to copy [{0}] to {1} drive(s)...", cp._sourceDir, cp._destDirs.Count), rt);
 
                 // Begin the copy in BackgroundWorker, pass CopyParams object into it
                 bw.RunWorkerAsync(cp);
-            }            
+            }
             catch (Exception ex) {
-                MessageBox.Show("Error:  " + ex.Message, "USB Batch Copy", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                Logger.Log("Error: " + ex.Message, rt, Color.Red);
+                //MessageBox.Show("Error:  " + ex.Message, "USB Batch Copy", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 if (ex.Message.Contains("Target destination drive does not exist"))
                     PopulateListView(lvDrives);
             }
@@ -338,16 +343,14 @@ namespace USBBatchCopy
         private void bw_RunWorkerCompleted(object sender, System.ComponentModel.RunWorkerCompletedEventArgs e)
         {                        
             if (e.Cancelled) {   
-                // The user cancelled the operation.                
-                lblStatus.ForeColor = Color.Black;
+                // The user cancelled the operation.
                 lblStatus.Text = "Ready";
-                Logger.Log(string.Format("Copy operation has been cancelled.", GetDestinationDirs(lvDrives).Count()), rt, Color.Red);
+                Logger.Log("Copy operation has been cancelled", rt, Color.Red);
                 this.BringToFront();
                 this.Focus();
             }            
             else if (e.Error != null) {
                 // There was an error during the operation.
-                lblStatus.ForeColor = Color.Black;
                 lblStatus.Text = "Ready";
                 PopulateListView(lvDrives);
                 Logger.Log(string.Format("An error has occured: " + e.Error.Message, GetDestinationDirs(lvDrives).Count()), rt, Color.Red);
@@ -358,7 +361,7 @@ namespace USBBatchCopy
             else {
                 // The operation completed normally.
                 PictureBox1.Visible = true;
-                Logger.Log(string.Format("Copy operation complete -- copied to {0} drive(s).", GetDestinationDirs(lvDrives).Count()), rt, Color.Green);             
+                Logger.Log(string.Format("Copy operation complete -- copied to {0} drive(s)", GetDestinationDirs(lvDrives).Count()), rt, Color.Green);             
             }
 
             // Enable UI controls            
