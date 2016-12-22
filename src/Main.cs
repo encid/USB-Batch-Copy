@@ -54,7 +54,7 @@ namespace USBBatchCopy
 
             // Tick the checkbox if any part of the item line in ListView is clicked
             lvDrives.MouseClick += (o, e) => {
-                ListViewItem lvi = lvDrives.GetItemAt(e.X, e.Y);
+                var lvi = lvDrives.GetItemAt(e.X, e.Y);
                 if (e.X > 16) lvi.Checked = !lvi.Checked;
             };
 
@@ -91,7 +91,7 @@ namespace USBBatchCopy
 
         private List<string> GetDestinationDirs(ListView lview)
         {
-            List<string> d = new List<string>();
+            var d = new List<string>();
 
             foreach (ListViewItem item in lview.CheckedItems) {
                 d.Add(item.Text);
@@ -110,9 +110,9 @@ namespace USBBatchCopy
             string[] suf = { "B", "KB", "MB", "GB", "TB", "PB", "EB" }; //Longs run out around EB
             if (byteCount == 0)
                 return "0" + suf[0];
-            long bytes = Math.Abs(byteCount);
-            int place = Convert.ToInt32(Math.Floor(Math.Log(bytes, 1024)));
-            double num = Math.Round(bytes / Math.Pow(1024, place), 1);
+            var bytes = Math.Abs(byteCount);
+            var place = Convert.ToInt32(Math.Floor(Math.Log(bytes, 1024)));
+            var num = Math.Round(bytes / Math.Pow(1024, place), 1);
             return (Math.Sign(byteCount) * num).ToString() + suf[place];
         }
 
@@ -158,7 +158,7 @@ namespace USBBatchCopy
 
             lview.Items.Clear();
 
-            IEnumerable<DriveInfo> drives = GetRemovableDrives();
+            var drives = GetRemovableDrives();
 
             // If no removable drives detected, exit method
             if (!drives.Any()) {
@@ -173,7 +173,7 @@ namespace USBBatchCopy
                 var freeSpace = BytesToString(drive.TotalFreeSpace);
                 var totalSpace = BytesToString(drive.TotalSize);
 
-                ListViewItem oItem = new ListViewItem();
+                var oItem = new ListViewItem();
 
                 oItem.Text = drive.Name;
                 oItem.SubItems.Add(drive.VolumeLabel);
@@ -234,7 +234,7 @@ namespace USBBatchCopy
                 throw new Exception("Please select a valid source folder and try again.");
             
             // Check if source drive is ready and exists
-            DriveInfo dInfo = new DriveInfo(srcDir.Substring(0, 2));
+            var dInfo = new DriveInfo(srcDir.Substring(0, 2));
             if (!dInfo.IsReady)
                 throw new Exception("Source drive is not ready. Please try again.");
 
@@ -260,7 +260,7 @@ namespace USBBatchCopy
         {
             PictureBox1.Visible = false;
 
-            CopyParams cp = new CopyParams(txtSourceDir.Text, GetDestinationDirs(lvDrives));
+            var cp = new CopyParams(txtSourceDir.Text, GetDestinationDirs(lvDrives));
 
             try {
                 // Validate user input on UI
@@ -289,7 +289,7 @@ namespace USBBatchCopy
 
             // AUTOMATIC REFRESH of drive list -- Edit config file to enable/disable
             if (ConfigurationManager.AppSettings["autoRefresh"] == "1") { 
-                IEnumerable<DriveInfo> drives = GetRemovableDrives();
+                var drives = GetRemovableDrives();
 
                 if (drives.Count() != currDriveCount)
                     PopulateListView(lvDrives);
@@ -300,7 +300,7 @@ namespace USBBatchCopy
 
         private void bw_DoWork(object sender, System.ComponentModel.DoWorkEventArgs e)
         {
-            CopyParams cp = (CopyParams)e.Argument;
+            var cp = (CopyParams)e.Argument;
 
             try {                
                 PerformCopy(cp._sourceDir, cp._destDirs);
@@ -314,7 +314,7 @@ namespace USBBatchCopy
 
         private void bw_ProgressChanged(object sender, System.ComponentModel.ProgressChangedEventArgs e)
         {
-            ProgressParams pp = (ProgressParams)e.UserState;
+            var pp = (ProgressParams)e.UserState;
 
             Logger.Log(string.Format("Copying drive {0} of {1}..", pp._currentDrive, pp._totalDrives), rt);
 
@@ -322,7 +322,7 @@ namespace USBBatchCopy
 
         private void PerformCopy(string srcDir, List<string> destDirs)
         {
-            ProgressParams pp = new ProgressParams(0, destDirs.Count);
+            var pp = new ProgressParams(0, destDirs.Count);
 
             // Start copy execution
             for (int i = 0; i < destDirs.Count; i++) {
@@ -367,7 +367,8 @@ namespace USBBatchCopy
         private void EnableUI()
         {
             // Enable UI controls            
-            if (ConfigurationManager.AppSettings["autoRefresh"] == "0") { btnRefreshDrives.Enabled = true; }
+            //if (ConfigurationManager.AppSettings["autoRefresh"] == "0") { btnRefreshDrives.Enabled = true; }
+            btnRefreshDrives.Enabled |= ConfigurationManager.AppSettings["autoRefresh"] == "0";
             btnStartCopy.Enabled = true;
             btnSelectAll.Enabled = true;
             btnSelectNone.Enabled = true;
@@ -380,7 +381,8 @@ namespace USBBatchCopy
         private void DisableUI()
         {
             // Enable UI controls            
-            if (ConfigurationManager.AppSettings["autoRefresh"] == "0") { btnRefreshDrives.Enabled = false; }
+            //if (ConfigurationManager.AppSettings["autoRefresh"] == "0") { btnRefreshDrives.Enabled = false; }
+            btnRefreshDrives.Enabled &= ConfigurationManager.AppSettings["autoRefresh"] != "0";
             btnStartCopy.Enabled = false;
             btnSelectAll.Enabled = false;
             btnSelectNone.Enabled = false;
@@ -388,20 +390,6 @@ namespace USBBatchCopy
             btnBrowse.Enabled = false;
             txtSourceDir.Enabled = false;
             tmrRefresh.Enabled = false;
-        }
-
-        /// <summary>
-        /// Gets the network path for the specified drive.
-        /// </summary>
-        /// <param name="path">Drive to perform search on.</param>
-        /// <returns></returns>
-        public static string GetUNCPath(string path)
-        {
-            if (path.StartsWith(@"\\")) return path;
-
-            ManagementObject mo = new ManagementObject();
-            mo.Path = new ManagementPath(string.Format("Win32_LogicalDisk='{0}'", path));
-            return Convert.ToString(mo["ProviderName"]);
         }
 
         /// <summary>

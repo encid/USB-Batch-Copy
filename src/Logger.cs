@@ -10,7 +10,7 @@ using System.Management;
 
 namespace USBBatchCopy 
     {
-    public class Logger {
+    public static class Logger {
 
         /// <summary>
         /// Write a message to the status log textbox.
