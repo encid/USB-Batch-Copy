@@ -19,7 +19,6 @@ namespace USBBatchCopy
     public partial class Main : Form {
         int currDriveCount;
         FolderBrowserDialog fbd;
-        public static Main _Main;
 
         private struct CopyParams {
             public readonly string _sourceDir;
@@ -44,8 +43,6 @@ namespace USBBatchCopy
         public Main()
         {
             InitializeComponent();
-
-            _Main = this; 
 
             PopulateListView(lvDrives);  // Add (destination) removable drives to ListView
 
@@ -89,8 +86,7 @@ namespace USBBatchCopy
         private void ExecuteSecure(Action a)
         // Usage example: ExecuteSecure(() => this.someLabel.Text = "foo");
         {
-            BeginInvoke(a);
-            
+            BeginInvoke(a);            
         }        
 
         private List<string> GetDestinationDirs(ListView lview)
@@ -203,9 +199,6 @@ namespace USBBatchCopy
         // Sets check state for all listed drives to true.
         {
             SetListViewCheckState(lvDrives, true);
-
-            Logger.Log("Data programmed at the following positions:", rt);
-
         }
 
         private void btnSelectNone_Click(object sender, EventArgs e)
@@ -361,6 +354,7 @@ namespace USBBatchCopy
             else {
                 // The operation completed normally.
                 PictureBox1.Visible = true;
+                lblStatus.Text = "Ready";
                 Logger.Log(string.Format("Copy operation complete -- copied to {0} drive(s)", GetDestinationDirs(lvDrives).Count()), rt, Color.Green);             
             }
 

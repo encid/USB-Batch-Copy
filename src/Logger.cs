@@ -7,16 +7,10 @@ using System.Linq;
 using System.Windows.Forms;
 using System.Configuration;
 using System.Management;
-using USBBatchCopy;
 
 namespace USBBatchCopy 
     {
     public class Logger {
-
-        public void Test()
-        {
-            
-        }
 
         /// <summary>
         /// Write a message to the status log textbox.
