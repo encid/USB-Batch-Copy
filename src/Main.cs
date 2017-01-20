@@ -1,7 +1,7 @@
 ﻿/*
  USB Batch Copy
  Written by R. Cavallaro
- Version 1.09
+ Version 1.1.0
 */
 
 using Microsoft.VisualBasic.FileIO;
@@ -12,7 +12,6 @@ using System.IO;
 using System.Linq;
 using System.Windows.Forms;
 using System.Configuration;
-using System.Management;
 
 namespace USBBatchCopy
 {
@@ -48,9 +47,9 @@ namespace USBBatchCopy
 
             currDriveCount = lvDrives.Items.Count;
 
-            txtSourceDir.Enter += (o, e) => {                
-                ExecuteSecure(txtSourceDir.SelectAll);  // Kick off SelectAll asynchronously so that it occurs after Click
-            };
+            //txtSourceDir.Enter += (o, e) => {                
+            //    ExecuteSecure(txtSourceDir.SelectAll);  // Kick off SelectAll asynchronously so that it occurs after Click
+            //};
 
             // Tick the checkbox if any part of the item line in ListView is clicked
             lvDrives.MouseClick += (o, e) => {
@@ -172,7 +171,6 @@ namespace USBBatchCopy
                 driveNames += drive.Name + ", "; 
                 var freeSpace = BytesToString(drive.TotalFreeSpace);
                 var totalSpace = BytesToString(drive.TotalSize);
-
                 var oItem = new ListViewItem();
 
                 oItem.Text = drive.Name;
@@ -191,7 +189,8 @@ namespace USBBatchCopy
 
             // Get count and names of drives found and log it to status
             driveNames = driveNames.Substring(0, driveNames.Length - 2);
-            Logger.Log(string.Format("Detected {0} removable drives: {1}", drives.Count(), driveNames), rt);
+            var logStr = string.Format("Detected {0} removable drives: {1}", drives.Count(), driveNames);
+            Logger.Log(logStr, rt);
 
         }
 
@@ -217,8 +216,10 @@ namespace USBBatchCopy
         {
             if (fbd.SelectedPath == "") { fbd.SelectedPath = @"V:\Released_Part_Information\"; }
 
-            if (fbd.ShowDialog() == DialogResult.OK) {
+            if (fbd.ShowDialog() == DialogResult.OK && fbd.SelectedPath != txtSourceDir.Text) {
                 txtSourceDir.Text = fbd.SelectedPath;
+                var logStr = string.Format("Source folder set to: '{0}'", fbd.SelectedPath);                
+                Logger.Log(logStr, rt);                
             }
         }
 
@@ -270,13 +271,15 @@ namespace USBBatchCopy
                 // Disable UI controls and set status
                 DisableUI();
                 lblStatus.Text = "Copying...";
-                Logger.Log(string.Format("Starting to copy [{0}] to {1} drive(s)...", cp._sourceDir, cp._destDirs.Count), rt);
+                var logStr = string.Format("Starting to copy [{0}] to {1} drive(s)...", cp._sourceDir, cp._destDirs.Count);
+                Logger.Log(logStr, rt);
 
                 // Begin the copy in BackgroundWorker, pass CopyParams object into it
                 bw.RunWorkerAsync(cp);
             }
             catch (Exception ex) {
-                Logger.Log("Error: " + ex.Message, rt, Color.Red);
+                var logStr = string.Format("Error: {0}", ex.Message);
+                Logger.Log(logStr, rt, Color.Red);
                 //MessageBox.Show("Error:  " + ex.Message, "USB Batch Copy", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 if (ex.Message.Contains("Target destination drive does not exist"))
                     PopulateListView(lvDrives);
@@ -316,7 +319,8 @@ namespace USBBatchCopy
         {
             var pp = (ProgressParams)e.UserState;
 
-            Logger.Log(string.Format("Copying drive {0} of {1}..", pp._currentDrive, pp._totalDrives), rt);
+            var logStr = string.Format("Copying drive {0} of {1}..", pp._currentDrive, pp._totalDrives);
+            Logger.Log(logStr, rt);
 
         }
 
@@ -346,7 +350,8 @@ namespace USBBatchCopy
                 // There was an error during the operation.
                 lblStatus.Text = "Ready";
                 PopulateListView(lvDrives);
-                Logger.Log(string.Format("An error has occured: " + e.Error.Message, GetDestinationDirs(lvDrives).Count()), rt, Color.Red);
+                var logStr = string.Format("An error has occured: {0}", e.Error.Message);
+                Logger.Log(logStr, rt, Color.Red);
                 MessageBox.Show("An error has occured: " + e.Error.Message, "USB Batch Copy", MessageBoxButtons.OK);
                 this.BringToFront();
                 this.Focus();
@@ -355,7 +360,8 @@ namespace USBBatchCopy
                 // The operation completed normally.
                 PictureBox1.Visible = true;
                 lblStatus.Text = "Ready";
-                Logger.Log(string.Format("Copy operation complete -- copied to {0} drive(s)", GetDestinationDirs(lvDrives).Count()), rt, Color.Green);             
+                var logStr = string.Format("Copy operation successful -- copied to {0} drive(s)", GetDestinationDirs(lvDrives).Count());
+                Logger.Log(logStr, rt, Color.Green);             
             }
 
             // Enable UI controls            

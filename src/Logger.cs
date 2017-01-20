@@ -1,12 +1,6 @@
-﻿using Microsoft.VisualBasic.FileIO;
-using System;
-using System.Collections.Generic;
+﻿using System;
 using System.Drawing;
-using System.IO;
-using System.Linq;
 using System.Windows.Forms;
-using System.Configuration;
-using System.Management;
 
 namespace USBBatchCopy 
     {

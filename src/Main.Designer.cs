@@ -194,6 +194,7 @@
             this.txtSourceDir.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.txtSourceDir.Location = new System.Drawing.Point(12, 21);
             this.txtSourceDir.Name = "txtSourceDir";
+            this.txtSourceDir.ReadOnly = true;
             this.txtSourceDir.Size = new System.Drawing.Size(485, 23);
             this.txtSourceDir.TabIndex = 0;
             this.txtSourceDir.Text = " <Select a source folder>";
@@ -296,7 +297,7 @@
             this.MaximizeBox = false;
             this.Name = "Main";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
-            this.Text = "USB Batch Copy 1.09";
+            this.Text = "USB Batch Copy 1.1.0";
             this.Load += new System.EventHandler(this.Form1_Load);
             this.groupBox1.ResumeLayout(false);
             this.groupBox1.PerformLayout();
