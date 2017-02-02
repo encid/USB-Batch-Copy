@@ -12,12 +12,17 @@ using System.IO;
 using System.Linq;
 using System.Windows.Forms;
 using System.Configuration;
+using System.Runtime.InteropServices;
 
 namespace USBBatchCopy
 {
     public partial class Main : Form {
-        int currDriveCount;
+        bool startup = true;
         FolderBrowserDialog fbd;
+        const int WM_DEVICECHANGE = 0x0219; //see msdn site
+        const int DBT_DEVICEARRIVAL = 0x8000;
+        const int DBT_DEVICEREMOVALCOMPLETE = 0x8004;
+        const int DBT_DEVTYPVOLUME = 0x00000002;
 
         private struct CopyParams {
             public readonly string _sourceDir;
@@ -39,17 +44,21 @@ namespace USBBatchCopy
             }
         }
 
+        [StructLayout(LayoutKind.Sequential)] //Same layout in mem
+        public struct DEV_BROADCAST_VOLUME
+        {
+            public int dbcv_size;
+            public int dbcv_devicetype;
+            public int dbcv_reserved;
+            public int dbcv_unitmask;
+        }
+
         public Main()
         {
             InitializeComponent();
 
             PopulateListView(lvDrives);  // Add (destination) removable drives to ListView
-
-            currDriveCount = lvDrives.Items.Count;
-
-            //txtSourceDir.Enter += (o, e) => {                
-            //    ExecuteSecure(txtSourceDir.SelectAll);  // Kick off SelectAll asynchronously so that it occurs after Click
-            //};
+            startup = false;
 
             // Tick the checkbox if any part of the item line in ListView is clicked
             lvDrives.MouseClick += (o, e) => {
@@ -71,10 +80,8 @@ namespace USBBatchCopy
 
             //Make sure textbox stays at the most recent line(bottom most)
             rt.TextChanged += (sender, e) => {
-                if (rt.Visible) {
-                    //rt.SelectionStart = rt.TextLength;
+                if (rt.Visible) 
                     rt.ScrollToCaret();
-                }
             };
         }
 
@@ -153,7 +160,7 @@ namespace USBBatchCopy
         /// <param name="lview">ListView to populate.</param>
         private void PopulateListView(ListView lview)
         {
-            Logger.Log("Scanning for removable drives...", rt);
+            if (startup == true) Logger.Log("Scanning for USB devices..", rt);
 
             lview.Items.Clear();
 
@@ -161,7 +168,7 @@ namespace USBBatchCopy
 
             // If no removable drives detected, exit method
             if (!drives.Any()) {
-                Logger.Log("No removable drives detected", rt);
+                if (startup == true) Logger.Log("No USB devices detected", rt);
                 return;
             }
             
@@ -185,13 +192,18 @@ namespace USBBatchCopy
             // Set column width
             for (int i = 0; i < lview.Columns.Count; i++) {
                 lview.Columns[i].Width = -2;
+            }            
+
+            if (startup == true) {
+                // Get count and names of drives found and log it to status
+                driveNames = driveNames.Substring(0, driveNames.Length - 2);
+                string logStr;
+                if (drives.Count() == 1)
+                    logStr = string.Format("Detected {0} USB device: {1}", drives.Count(), driveNames);
+                else
+                    logStr = string.Format("Detected {0} USB devices: {1}", drives.Count(), driveNames);
+                Logger.Log(logStr, rt); 
             }
-
-            // Get count and names of drives found and log it to status
-            driveNames = driveNames.Substring(0, driveNames.Length - 2);
-            var logStr = string.Format("Detected {0} removable drives: {1}", drives.Count(), driveNames);
-            Logger.Log(logStr, rt);
-
         }
 
         private void btnSelectAll_Click(object sender, EventArgs e)
@@ -285,21 +297,6 @@ namespace USBBatchCopy
                     PopulateListView(lvDrives);
             }
         }
-        
-        private void tmrRefresh_Tick(object sender, EventArgs e)
-        {
-            lblSelectedDrives.Text = string.Format("Drives Selected: {0}", lvDrives.CheckedItems.Count);
-
-            // AUTOMATIC REFRESH of drive list -- Edit config file to enable/disable
-            if (ConfigurationManager.AppSettings["autoRefresh"] == "1") { 
-                var drives = GetRemovableDrives();
-
-                if (drives.Count() != currDriveCount)
-                    PopulateListView(lvDrives);
-
-                currDriveCount = drives.Count();
-            }            
-        }
 
         private void bw_DoWork(object sender, System.ComponentModel.DoWorkEventArgs e)
         {
@@ -381,7 +378,6 @@ namespace USBBatchCopy
             lvDrives.Enabled = true;
             btnBrowse.Enabled = true;
             txtSourceDir.Enabled = true;
-            tmrRefresh.Enabled = true;
         }
 
         private void DisableUI()
@@ -395,7 +391,6 @@ namespace USBBatchCopy
             lvDrives.Enabled = false;
             btnBrowse.Enabled = false;
             txtSourceDir.Enabled = false;
-            tmrRefresh.Enabled = false;
         }
 
         /// <summary>
@@ -406,6 +401,50 @@ namespace USBBatchCopy
         public bool IsDirectoryEmpty(string path)
         {
             return !Directory.EnumerateFileSystemEntries(path).Any();
+        }
+
+        protected override void WndProc(ref Message m)
+        {
+            try {
+                if (m.Msg == WM_DEVICECHANGE) {
+                    var vol = (DEV_BROADCAST_VOLUME)Marshal.PtrToStructure(m.LParam, typeof(DEV_BROADCAST_VOLUME));
+                    if ((m.WParam.ToInt32() == DBT_DEVICEARRIVAL) && (vol.dbcv_devicetype == DBT_DEVTYPVOLUME)) {
+                        var driveStr = string.Format(@"{0}:\", DriveMaskToLetter(vol.dbcv_unitmask).ToString());
+                        PopulateListView(lvDrives);
+                        var logStr = string.Format("Detected new USB device: {0}", driveStr);
+                        Logger.Log(logStr, rt);
+                        
+                    }
+                    if ((m.WParam.ToInt32() == DBT_DEVICEREMOVALCOMPLETE) && (vol.dbcv_devicetype == DBT_DEVTYPVOLUME)) {
+                        var driveStr = string.Format(@"{0}:\", DriveMaskToLetter(vol.dbcv_unitmask).ToString());
+                        PopulateListView(lvDrives);
+                        var logStr = string.Format("Detected USB device removal: {0}", driveStr);
+                        Logger.Log(logStr, rt);
+                    }
+                }
+                base.WndProc(ref m);
+            }
+            catch (NullReferenceException) {
+            }
+            catch (Exception) {
+            }            
         }        
+
+        private static char DriveMaskToLetter(int mask)
+        {
+            char[] units ={ 'A', 'B', 'C', 'D', 'E', 'F', 'G',
+                        'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P',
+                        'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z' };
+            int i = 0;
+            //Convert the mask in an array, and search
+            //the index for the first occurrence (the unit's name)
+            var ba = new System.Collections.BitArray(BitConverter.GetBytes(mask));
+            foreach (bool var in ba) {
+                if (var == true)
+                    break;
+                i++;
+            }
+            return units[i];
+        }
     }
 }
