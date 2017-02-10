@@ -2,24 +2,40 @@
  USB Batch Copy
  Written by R. Cavallaro
  Version 1.1.0
+
+ *******************************************************************************************************
+ * 
+ * UPDATES:
+ * 
+ * 2/10/17 - Added Extension method to pluralize strings; put it into new Extensions.cs class file
+ *         - Moved AppendText extension method to Extensions.cs class file
+ *         - Changed background color of source textbox and logger textbox so they do not show up
+ *           as gray on XP machines
+ *         - Removed redundant Column width setting in PopulateListView method
+ *         
+ *******************************************************************************************************
 */
 
-using Microsoft.VisualBasic.FileIO;
 using System;
+using Microsoft.VisualBasic.FileIO;
 using System.Collections.Generic;
 using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Windows.Forms;
 using System.Configuration;
+using System.ComponentModel;
 
 namespace USBBatchCopy
 {
-    public partial class Main : Form {
+    public partial class Main : Form
+    {
         int currDriveCount;
         FolderBrowserDialog fbd;
+        BackgroundWorker bw;
 
-        private struct CopyParams {
+        private struct CopyParams
+        {
             public readonly string _sourceDir;
             public readonly List<string> _destDirs;
             public CopyParams(string source, List<string> destinations)
@@ -29,7 +45,8 @@ namespace USBBatchCopy
             }
         }
 
-        private struct ProgressParams {
+        private struct ProgressParams
+        {
             public int _currentDrive;
             public readonly int _totalDrives;
             public ProgressParams(int currentDrive, int totalDrives)
@@ -43,13 +60,10 @@ namespace USBBatchCopy
         {
             InitializeComponent();
 
-            PopulateListView(lvDrives);  // Add (destination) removable drives to ListView
+            // Add (destination) removable drives to ListView
+            PopulateListView(lvDrives);  
 
             currDriveCount = lvDrives.Items.Count;
-
-            //txtSourceDir.Enter += (o, e) => {                
-            //    ExecuteSecure(txtSourceDir.SelectAll);  // Kick off SelectAll asynchronously so that it occurs after Click
-            //};
 
             // Tick the checkbox if any part of the item line in ListView is clicked
             lvDrives.MouseClick += (o, e) => {
@@ -59,22 +73,30 @@ namespace USBBatchCopy
 
             // Add columns to the ListView
             lvDrives.Columns.Add("Drive", -2, HorizontalAlignment.Left);
-            lvDrives.Columns.Add("Volume name", -2, HorizontalAlignment.Left);
-            lvDrives.Columns.Add("File system", -2, HorizontalAlignment.Left);
-            lvDrives.Columns.Add("Free space", -2, HorizontalAlignment.Left);
+            lvDrives.Columns.Add("Volume Name", -2, HorizontalAlignment.Left);
+            lvDrives.Columns.Add("File System", -2, HorizontalAlignment.Left);
             lvDrives.Columns.Add("Capacity", -2, HorizontalAlignment.Left);
+            lvDrives.Columns.Add("Free Space", -2, HorizontalAlignment.Left);
 
+            // Set up BackgroundWorker
+            bw = new BackgroundWorker {
+                WorkerReportsProgress = true,
+                WorkerSupportsCancellation = true                
+            };
+            bw.DoWork += bw_DoWork;
+            bw.ProgressChanged += bw_ProgressChanged;
+            bw.RunWorkerCompleted += bw_RunWorkerCompleted;
+
+            // Set up FolderBrowserDialog
             fbd = new FolderBrowserDialog {
                 ShowNewFolderButton = false,
                 Description = "Select the source folder to copy files from.\nIf copying software, you should select the 'ECL' folder of the software p/n."                
             };
 
-            //Make sure textbox stays at the most recent line(bottom most)
+            // Make sure textbox stays at the most recent line(bottom most)
             rt.TextChanged += (sender, e) => {
-                if (rt.Visible) {
-                    //rt.SelectionStart = rt.TextLength;
-                    rt.ScrollToCaret();
-                }
+                if (rt.Visible) 
+                    rt.ScrollToCaret();                
             };
         }
 
@@ -176,20 +198,15 @@ namespace USBBatchCopy
                 oItem.Text = drive.Name;
                 oItem.SubItems.Add(drive.VolumeLabel);
                 oItem.SubItems.Add(drive.DriveFormat);
-                oItem.SubItems.Add(freeSpace);
                 oItem.SubItems.Add(totalSpace);
+                oItem.SubItems.Add(freeSpace);
 
                 lview.Items.Add(oItem);
-            }            
-
-            // Set column width
-            for (int i = 0; i < lview.Columns.Count; i++) {
-                lview.Columns[i].Width = -2;
             }
 
             // Get count and names of drives found and log it to status
             driveNames = driveNames.Substring(0, driveNames.Length - 2);
-            var logStr = string.Format("Detected {0} removable drives: {1}", drives.Count(), driveNames);
+            var logStr = string.Format("Detected {0} removable {1}: {2}", drives.Count(), "drive".Pluralize(drives.Count()), driveNames);
             Logger.Log(logStr, rt);
 
         }
@@ -270,8 +287,8 @@ namespace USBBatchCopy
                 // No exceptions, so continue....
                 // Disable UI controls and set status
                 DisableUI();
-                lblStatus.Text = "Copying...";
-                var logStr = string.Format("Starting to copy [{0}] to {1} drive(s)...", cp._sourceDir, cp._destDirs.Count);
+                lblStatus.Text = "Copying...";                
+                var logStr = string.Format("Starting to copy '{0}' to {1} {2}...", cp._sourceDir, cp._destDirs.Count, "drive".Pluralize(cp._destDirs.Count));
                 Logger.Log(logStr, rt);
 
                 // Begin the copy in BackgroundWorker, pass CopyParams object into it
@@ -288,8 +305,6 @@ namespace USBBatchCopy
         
         private void tmrRefresh_Tick(object sender, EventArgs e)
         {
-            lblSelectedDrives.Text = string.Format("Drives Selected: {0}", lvDrives.CheckedItems.Count);
-
             // AUTOMATIC REFRESH of drive list -- Edit config file to enable/disable
             if (ConfigurationManager.AppSettings["autoRefresh"] == "1") { 
                 var drives = GetRemovableDrives();
@@ -301,7 +316,7 @@ namespace USBBatchCopy
             }            
         }
 
-        private void bw_DoWork(object sender, System.ComponentModel.DoWorkEventArgs e)
+        private void bw_DoWork(object sender, DoWorkEventArgs e)
         {
             var cp = (CopyParams)e.Argument;
 
@@ -315,7 +330,7 @@ namespace USBBatchCopy
             }
         }
 
-        private void bw_ProgressChanged(object sender, System.ComponentModel.ProgressChangedEventArgs e)
+        private void bw_ProgressChanged(object sender, ProgressChangedEventArgs e)
         {
             var pp = (ProgressParams)e.UserState;
 
@@ -323,21 +338,8 @@ namespace USBBatchCopy
             Logger.Log(logStr, rt);
 
         }
-
-        private void PerformCopy(string srcDir, List<string> destDirs)
-        {
-            var pp = new ProgressParams(0, destDirs.Count);
-
-            // Start copy execution
-            for (int i = 0; i < destDirs.Count; i++) {
-                pp._currentDrive++;
-                bw.ReportProgress(i, pp);
-                string destDir = destDirs[i];
-                FileSystem.CopyDirectory(srcDir, destDir, UIOption.AllDialogs, UICancelOption.ThrowException);
-            }            
-        }
-
-        private void bw_RunWorkerCompleted(object sender, System.ComponentModel.RunWorkerCompletedEventArgs e)
+        
+        private void bw_RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
         {                        
             if (e.Cancelled) {   
                 // The user cancelled the operation.
@@ -360,7 +362,8 @@ namespace USBBatchCopy
                 // The operation completed normally.
                 PictureBox1.Visible = true;
                 lblStatus.Text = "Ready";
-                var logStr = string.Format("Copy operation successful -- copied to {0} drive(s)", GetDestinationDirs(lvDrives).Count());
+                var logStr = string.Format("Copy operation successful -- copied to {0} {1}", GetDestinationDirs(lvDrives).Count(), 
+                                                                            "drive".Pluralize(GetDestinationDirs(lvDrives).Count));
                 Logger.Log(logStr, rt, Color.Green);             
             }
 
@@ -368,6 +371,19 @@ namespace USBBatchCopy
             EnableUI();
             
             SetListViewCheckState(lvDrives, false);
+        }
+
+        private void PerformCopy(string srcDir, List<string> destDirs)
+        {
+            var pp = new ProgressParams(0, destDirs.Count);
+
+            // Start copy execution
+            for (int i = 0; i < destDirs.Count; i++) {
+                pp._currentDrive++;
+                bw.ReportProgress(i, pp);
+                string destDir = destDirs[i];
+                FileSystem.CopyDirectory(srcDir, destDir, UIOption.AllDialogs, UICancelOption.ThrowException);
+            }
         }
 
         private void EnableUI()
@@ -406,6 +422,6 @@ namespace USBBatchCopy
         public bool IsDirectoryEmpty(string path)
         {
             return !Directory.EnumerateFileSystemEntries(path).Any();
-        }        
+        }   
     }
 }

@@ -4,8 +4,8 @@ using System.Windows.Forms;
 
 namespace USBBatchCopy 
     {
-    public static class Logger {
-
+    public static class Logger
+    {
         /// <summary>
         /// Write a message to the status log textbox, with default black foreground text color.
         /// </summary>
@@ -34,17 +34,5 @@ namespace USBBatchCopy
             else
                 box.AppendText(Environment.NewLine + message, color);
         }
-    }
-
-    public static class RichTextBoxExtensions {
-        public static void AppendText(this RichTextBox box, string text, Color color)
-        {
-            box.SelectionStart = box.TextLength;
-            box.SelectionLength = 0;
-
-            box.SelectionColor = color;
-            box.AppendText(text);
-            box.SelectionColor = box.ForeColor;
-        }
-    }
+    }    
 }

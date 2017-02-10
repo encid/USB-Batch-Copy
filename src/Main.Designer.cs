@@ -35,7 +35,6 @@
             this.btnSelectNone = new System.Windows.Forms.Button();
             this.btnRefreshDrives = new System.Windows.Forms.Button();
             this.btnStartCopy = new System.Windows.Forms.Button();
-            this.lblSelectedDrives = new System.Windows.Forms.Label();
             this.groupBox1 = new System.Windows.Forms.GroupBox();
             this.lvDrives = new System.Windows.Forms.ListView();
             this.Label1 = new System.Windows.Forms.Label();
@@ -47,7 +46,6 @@
             this.lblStatus = new System.Windows.Forms.Label();
             this.PictureBox1 = new System.Windows.Forms.PictureBox();
             this.tmrRefresh = new System.Windows.Forms.Timer(this.components);
-            this.bw = new System.ComponentModel.BackgroundWorker();
             this.rt = new System.Windows.Forms.RichTextBox();
             Label3 = new System.Windows.Forms.Label();
             this.groupBox1.SuspendLayout();
@@ -114,21 +112,10 @@
             this.btnStartCopy.UseVisualStyleBackColor = true;
             this.btnStartCopy.Click += new System.EventHandler(this.btnStartCopy_Click);
             // 
-            // lblSelectedDrives
-            // 
-            this.lblSelectedDrives.AutoSize = true;
-            this.lblSelectedDrives.Font = new System.Drawing.Font("Arial", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.lblSelectedDrives.Location = new System.Drawing.Point(265, 210);
-            this.lblSelectedDrives.Name = "lblSelectedDrives";
-            this.lblSelectedDrives.Size = new System.Drawing.Size(106, 15);
-            this.lblSelectedDrives.TabIndex = 7;
-            this.lblSelectedDrives.Text = "Drives Selected: 0";
-            // 
             // groupBox1
             // 
             this.groupBox1.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(224)))), ((int)(((byte)(224)))), ((int)(((byte)(224)))));
             this.groupBox1.Controls.Add(this.btnRefreshDrives);
-            this.groupBox1.Controls.Add(this.lblSelectedDrives);
             this.groupBox1.Controls.Add(this.btnSelectNone);
             this.groupBox1.Controls.Add(this.lvDrives);
             this.groupBox1.Controls.Add(this.btnSelectAll);
@@ -261,14 +248,6 @@
             this.tmrRefresh.Interval = 500;
             this.tmrRefresh.Tick += new System.EventHandler(this.tmrRefresh_Tick);
             // 
-            // bw
-            // 
-            this.bw.WorkerReportsProgress = true;
-            this.bw.WorkerSupportsCancellation = true;
-            this.bw.DoWork += new System.ComponentModel.DoWorkEventHandler(this.bw_DoWork);
-            this.bw.ProgressChanged += new System.ComponentModel.ProgressChangedEventHandler(this.bw_ProgressChanged);
-            this.bw.RunWorkerCompleted += new System.ComponentModel.RunWorkerCompletedEventHandler(this.bw_RunWorkerCompleted);
-            // 
             // rt
             // 
             this.rt.Font = new System.Drawing.Font("Courier New", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
@@ -300,7 +279,6 @@
             this.Text = "USB Batch Copy 1.1.0";
             this.Load += new System.EventHandler(this.Form1_Load);
             this.groupBox1.ResumeLayout(false);
-            this.groupBox1.PerformLayout();
             this.groupBox2.ResumeLayout(false);
             this.groupBox2.PerformLayout();
             this.groupBox3.ResumeLayout(false);
@@ -316,7 +294,6 @@
         private System.Windows.Forms.Button btnSelectNone;
         private System.Windows.Forms.Button btnRefreshDrives;
         private System.Windows.Forms.Button btnStartCopy;
-        private System.Windows.Forms.Label lblSelectedDrives;
         private System.Windows.Forms.GroupBox groupBox1;
         internal System.Windows.Forms.Label Label1;
         private System.Windows.Forms.GroupBox groupBox2;
@@ -324,7 +301,6 @@
         internal System.Windows.Forms.Label lblStatus;
         internal System.Windows.Forms.PictureBox PictureBox1;
         private System.Windows.Forms.Timer tmrRefresh;
-        private System.ComponentModel.BackgroundWorker bw;
         private System.Windows.Forms.ImageList imageList1;
         private System.Windows.Forms.ListView lvDrives;
         private System.Windows.Forms.Button btnBrowse;
