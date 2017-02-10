@@ -2,6 +2,18 @@
  USB Batch Copy
  Written by R. Cavallaro
  Version 1.1.0
+
+ UPDATES
+ ***********************************************************************
+ * 
+ * 2/9/17 - Changed routine to detect inserted USB devices from a timer 
+ *          checking drives every 100ms to a WndProc override method.
+ *          Does not work with the SD card readers... will not detect when
+ *          a new SD card is inserted when the SD reader already has a
+ *          drive letter.
+ *          
+ ***********************************************************************
+  
 */
 
 using Microsoft.VisualBasic.FileIO;
