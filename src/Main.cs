@@ -1,11 +1,13 @@
 ﻿/*
  USB Batch Copy
  Written by R. Cavallaro
- Version 1.1.0
+ Version 1.1.1
 
  *******************************************************************************************************
  * 
  * UPDATES:
+ * 
+ * 12/6/17 - Added a check to delete contents of SD card if it is not empty
  * 
  * 2/10/17 - Added Extension method to pluralize strings; put it into new Extensions.cs class file
  *         - Moved AppendText extension method to Extensions.cs class file
@@ -72,7 +74,7 @@ namespace USBBatchCopy
             };
 
             // Add columns to the ListView
-            lvDrives.Columns.Add("Drive", -2, HorizontalAlignment.Left);
+            lvDrives.Columns.Add("Drive", 55, HorizontalAlignment.Left);
             lvDrives.Columns.Add("Volume Name", -2, HorizontalAlignment.Left);
             lvDrives.Columns.Add("File System", -2, HorizontalAlignment.Left);
             lvDrives.Columns.Add("Capacity", -2, HorizontalAlignment.Left);
@@ -336,7 +338,6 @@ namespace USBBatchCopy
 
             var logStr = string.Format("Copying drive {0} of {1}..", pp._currentDrive, pp._totalDrives);
             Logger.Log(logStr, rt);
-
         }
         
         private void bw_RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
@@ -382,6 +383,14 @@ namespace USBBatchCopy
                 pp._currentDrive++;
                 bw.ReportProgress(i, pp);
                 string destDir = destDirs[i];
+
+                // If drive is not empty, delete all dirs and files on drive
+                if (!IsDirectoryEmpty(destDir))
+                {
+                    DeleteDirContents(destDir);
+                }
+
+                // Perform actual copy
                 FileSystem.CopyDirectory(srcDir, destDir, UIOption.AllDialogs, UICancelOption.ThrowException);
             }
         }
@@ -412,6 +421,24 @@ namespace USBBatchCopy
             btnBrowse.Enabled = false;
             txtSourceDir.Enabled = false;
             tmrRefresh.Enabled = false;
+        }
+
+        /// <summary>
+        /// Deletes all files and directories in a path, with no warning messages.
+        /// </summary>
+        /// <param name="path"></param>
+        private void DeleteDirContents(string path)
+        {
+            DirectoryInfo dir = new DirectoryInfo(path);
+
+            foreach (FileInfo fi in dir.GetFiles())
+                fi.Delete();
+
+            foreach (DirectoryInfo di in dir.GetDirectories())
+            {
+                DeleteDirContents(di.FullName);
+                di.Delete(true);
+            }
         }
 
         /// <summary>
